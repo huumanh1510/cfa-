@@ -87,7 +87,7 @@ input,textarea,select { font-family:var(--sans) }
 
 /* ── MAIN ── */
 #main { min-height:100vh; display:flex; flex-direction:column }
-.topbar { position:sticky; top:0; z-index:40; display:flex; align-items:center; gap:12px; padding:12px 28px; background:rgba(7,9,14,.9); backdrop-filter:blur(16px); border-bottom:1px solid var(--b1); flex-shrink:0 }
+.topbar { position:sticky; top:0; z-index:40; display:flex; align-items:center; gap:12px; padding:12px 20px 12px 28px; background:rgba(7,9,14,.9); backdrop-filter:blur(16px); border-bottom:1px solid var(--b1); flex-shrink:0 }
 .tb-t { font-family:var(--serif); font-size:17px; font-weight:700; color:var(--t1); flex:1 }
 .tb-t .ac { color:var(--or) }
 
@@ -450,6 +450,9 @@ input,textarea,select { font-family:var(--sans) }
 #app.sb-col .nb,
 #app.sb-col .fnv,
 #app.sb-col #sb-scrolls { display: none !important; }
+#app.sb-col .sb-logo-row { justify-content: center; gap: 0; }
+#app.sb-col .sb-col-btn { margin-left: 0; width: 28px; height: 28px; font-size: 12px; }
+#app.sb-col .sb-head { padding: 14px 6px 12px; }
 
 #app.sb-col .nv {
   justify-content: center;
@@ -683,6 +686,7 @@ input,textarea,select { font-family:var(--sans) }
     <div class="sb-logo-row">
       <div class="sb-logo-ic" id="sb-logo-ic" onclick="openProfile()"></div>
       <div class="sb-logo-nm">CFA Ninja Program</div>
+      <button class="sb-col-btn" id="sb-toggle" onclick="toggleSidebar()" title="Collapse sidebar">◀</button>
     </div>
     <div class="sb-logo-sub">CFA Study Platform · 忍術</div>
   </div>
@@ -714,7 +718,6 @@ input,textarea,select { font-family:var(--sans) }
 
 <div id="main">
   <div class="topbar">
-    <button class="sb-toggle" id="sb-toggle" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
     <div class="tb-t" id="tb-t">🏯 <span class="ac">Dashboard</span></div>
     <div id="tb-r"><div id="user-pill" class="user-pill" onclick="signOut()" style="display:none" title="Sign out"><div class="user-av-emoji" id="topbar-av" style="background:linear-gradient(135deg,#7c3910,#f97316)">🥷</div><span class="user-name" id="topbar-name">Ninja</span><span class="sync-dot" id="sync-dot" title="Data synced"></span></div></div>
   </div>
@@ -1465,7 +1468,7 @@ function updateSidebar(){
     html += `<div class="sb-subj-lbl">${subName}</div>`;
     html += scrolls.map(s => 
       `<div class="fnv ${CD===s._idx?'on':''}" onclick="openScroll(${s._idx})">
-        <span style="width:16px;height:16px;display:inline-block;margin-right:4px;">${renderIcon(s.icon)}</span>
+        <span style="font-size:15px;line-height:1;flex-shrink:0;margin-right:5px">${renderIcon(s.icon)}</span>
         <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.name}</span>
       </div>`
     ).join('');
@@ -1658,7 +1661,11 @@ function renderScrolls(){
 
 function renderScrollDetail(i){
   const s=D.scrolls[i];if(!s)return;
-  document.getElementById('scd-ic').innerHTML=renderIcon(s.icon);
+  const scdIcEl = document.getElementById('scd-ic');
+  const iconContent = renderIcon(s.icon);
+  // If emoji, wrap in font-size span; if URL, it renders as img
+  scdIcEl.innerHTML = iconContent.includes('<img') ? iconContent
+    : `<span style="font-size:24px;line-height:1">${iconContent}</span>`;
   document.getElementById('scd-nm').textContent=s.name;
   const ts=s.terms||[],due=ts.filter(isDue).length,mst=ts.filter(t=>(t.interval||0)>=21).length;
   document.getElementById('scd-mt').textContent=`${ts.length} terms · ${due} due · ${mst} mastered`;
@@ -1863,11 +1870,14 @@ let correctIdx=-1,yoursIdx=-1,gjFilter='all';
 function toggleGJForm(){
   const exp=document.getElementById('gj-exp');
   exp.classList.toggle('on');
-  if(exp.classList.contains('on')) populateGJTopicSel();
-  else resetGJForm();
+  if(exp.classList.contains('on')){
+    resetGJForm();         // always clear form when opening fresh
+    populateGJTopicSel();
+  }
 }
 function populateGJTopicSel(){
   const sel = document.getElementById('gj-topic');
+  if(sel) sel.value = '';
   if(!sel) return;
   const grouped = getGroupedScrolls();
   let opts = '<option value="">— Select a Reading —</option>';
@@ -2188,7 +2198,7 @@ function renderGJTrend(){
 function renderTermTable(){
   const all=D.scrolls.flatMap((s,si)=>(s.terms||[]).map(t=>({...t,sn:s.name,si_:s.icon})));
   const si2=t=>{if(!t.due)return{c:'p-bl',l:'New'};if(isDue(t))return{c:'p-or',l:'Due'};if((t.interval||0)>=21)return{c:'p-gn',l:'Master'};return{c:'p-yw',l:'Learning'}};
-  document.getElementById('perf-terms').innerHTML=all.length?all.map(t=>{const s=si2(t);return`<div class="ptr"><div class="ptc" style="flex-direction:column;align-items:flex-start"><div class="tn">${t.term}</div><div class="tf"><span style="width:12px;height:12px;display:inline-block">${renderIcon(t.si_)}</span> ${t.sn}</div></div><div class="ptc"><span class="pill ${s.c}">${s.l}</span></div><div class="ptc" style="color:var(--t2);font-family:monospace;font-size:12px">${t.interval||0}d</div><div class="ptc" style="color:var(--t2);font-family:monospace;font-size:12px">${(t.ease||2.5).toFixed(1)}</div><div class="ptc" style="font-size:11px;color:var(--t3)">${t.sn}</div></div>`}).join(''):'<div class="ptr" style="grid-template-columns:1fr;padding:18px"><span style="color:var(--t3)">No data yet</span></div>';
+  document.getElementById('perf-terms').innerHTML=all.length?all.map(t=>{const s=si2(t);return`<div class="ptr"><div class="ptc" style="flex-direction:column;align-items:flex-start"><div class="tn">${t.term}</div><div class="tf" style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:14px;line-height:1;flex-shrink:0">${renderIcon(t.si_)}</span><span>${t.sn}</span></div></div><div class="ptc"><span class="pill ${s.c}">${s.l}</span></div><div class="ptc" style="color:var(--t2);font-family:monospace;font-size:12px">${t.interval||0}d</div><div class="ptc" style="color:var(--t2);font-family:monospace;font-size:12px">${(t.ease||2.5).toFixed(1)}</div><div class="ptc" style="font-size:11px;color:var(--t3)">${t.fn||t.sn}</div></div>`}).join(''):'<div class="ptr" style="grid-template-columns:1fr;padding:18px"><span style="color:var(--t3)">No data yet</span></div>';
 }
 function renderForecast(){
   const box=document.getElementById('forecast-box');
@@ -2300,8 +2310,7 @@ function toggleSidebar(){
   const app=document.getElementById('app');
   const btn=document.getElementById('sb-toggle');
   const collapsed=app.classList.toggle('sb-col');
-  btn.textContent=collapsed?'→':'☰';
-  btn.title=collapsed?'Expand sidebar':'Collapse sidebar';
+  if(btn){ btn.textContent=collapsed?'▶':'◀'; btn.title=collapsed?'Expand':'Collapse'; }
   localStorage.setItem('sb_collapsed', collapsed?'1':'0');
 }
 
