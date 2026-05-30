@@ -88,6 +88,23 @@ input,textarea,select { font-family:var(--sans) }
 
 
 .nv .ic { width:18px; text-align:center; font-size:13px; flex-shrink:0 }
+/* SVG Nav Icons */
+.nav-svg { width:18px; height:18px; display:block; color:inherit; }
+.nv .nav-svg { color: var(--t3); }
+.nv:hover .nav-svg { color: var(--t1); }
+.nv.on .nav-svg { color: var(--or); }
+@keyframes sharinganSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes rasenganSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+.nv:hover .sharingan-svg { animation: sharinganSpin 1.5s linear infinite; }
+.nv.on .sharingan-svg { animation: sharinganSpin 3s linear infinite; }
+.nv:hover .rasengan-svg { animation: rasenganSpin 0.8s linear infinite; }
+.nv.on .rasengan-svg { animation: rasenganSpin 1.5s linear infinite; }
 .nb { margin-left:auto; font-size:10px; font-family:monospace; background:var(--s3); color:var(--t3); padding:1px 6px; border-radius:8px }
 .nv.on .nb { background:rgba(249,115,22,.2); color:var(--or) }
 .nb.red { background:var(--rg); color:var(--rd2); border:1px solid rgba(220,38,38,.18) }
@@ -311,16 +328,41 @@ input,textarea,select { font-family:var(--sans) }
 .cinner { width:100%; height:100%; transform-style:preserve-3d; transition:transform .65s var(--ease) }
 .cinner.fl { transform:rotateY(180deg) }
 .cface { position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:14px; display:flex; flex-direction:column; overflow:hidden }
-.cfront { background:var(--s1); border:1px solid var(--b1); box-shadow:0 12px 48px rgba(0,0,0,.5) }
-.cback { transform:rotateY(180deg); background:linear-gradient(135deg,#0b1018,#121929); border:1px solid var(--od); box-shadow:0 12px 48px rgba(249,115,22,.12) }
+.cfront { background:var(--s1); border:1px solid var(--b1); box-shadow:0 12px 48px rgba(0,0,0,.5); transition: box-shadow .3s; }
+.cfront:hover { box-shadow: 0 12px 48px rgba(0,0,0,.5), 0 0 0 1.5px var(--od), 0 0 24px rgba(249,115,22,.15); }
+/* Animated gradient border on card front hover */
+@keyframes borderGradientAnim {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.scene:hover .cfront::after {
+  content: '';
+  position: absolute; inset: -1.5px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, var(--od), var(--or), #d4a017, var(--od));
+  background-size: 200% 200%;
+  animation: borderGradientAnim 2.5s ease infinite;
+  z-index: -1;
+}
+/* Progress dots */
+.card-dots { display: flex; gap: 5px; align-items: center; justify-content: center; margin-top: 8px; margin-bottom: 6px; }
+.card-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--s3); border: 1px solid var(--b2); transition: all .2s; }
+.card-dot.active { background: var(--or); border-color: var(--or); transform: scale(1.25); }
+.card-dot.done { background: var(--od); border-color: var(--od); opacity: 0.6; }.cback { transform:rotateY(180deg); background:linear-gradient(135deg,#0b1018,#121929); border:1px solid var(--od); box-shadow:0 12px 48px rgba(249,115,22,.12) }
 .cacc { height:3px }
 .cfront .cacc { background:linear-gradient(90deg,var(--od),var(--or),#d4a017) }
 .cback  .cacc { background:linear-gradient(90deg,#7f1d1d,var(--rd2),var(--or)) }
 .cbody { flex:1; display:flex; flex-direction:column; padding:24px 32px }
 .cchip { display:inline-flex; align-items:center; gap:5px; font-size:9px; font-weight:800; letter-spacing:3px; text-transform:uppercase; color:var(--or); margin-bottom:12px }
 .cterm { font-family:var(--serif); font-size:30px; font-weight:700; line-height:1.2; color:var(--t1); flex:1; display:flex; align-items:center }
-.cdef { font-size:14px; line-height:1.75; color:var(--t2); flex:1; display:flex; align-items:center }
-.cfoot { padding:10px 32px; border-top:1px solid var(--b1); display:flex; justify-content:space-between; font-size:10px; color:var(--t4) }
+.cdef { font-size:18px; line-height:1.8; color:var(--t2); flex:1; display:flex; align-items:center }
+/* Markdown light rendering inside definitions */
+.cdef strong, .def-bold { color: var(--or2); font-weight: 700; }
+.cdef em { font-style: italic; color: var(--t1); }
+.cdef hr { border: none; border-top: 1px solid var(--b2); margin: 8px 0; width: 100%; }
+/* Table definition font */
+.ttc { padding:11px 14px; font-size:14px; color:var(--t2) }.cfoot { padding:10px 32px; border-top:1px solid var(--b1); display:flex; justify-content:space-between; font-size:10px; color:var(--t4) }
 .srs-row { display:flex; gap:8px; width:100%; max-width:680px; margin-bottom:10px }
 .sb { flex:1; padding:10px 0; border-radius:var(--r); font-size:13px; font-weight:700; display:flex; flex-direction:column; align-items:center; gap:1px; transition:all .18s; border:none }
 .sb:hover { transform:translateY(-2px) }
@@ -418,8 +460,62 @@ input,textarea,select { font-family:var(--sans) }
 .forecast-box.neutral { background:var(--s2); border:1px solid var(--b1); color:var(--t2) }
 
 /* ══════════════════════════════════════
-   PROFILE MODAL
+   MISSION BOARD
 ══════════════════════════════════════ */
+.mission-board {
+  background: var(--s1); border: 1px solid var(--b1);
+  border-radius: var(--r); padding: 16px 20px; margin-bottom: 18px;
+  position: relative; overflow: hidden;
+}
+.mission-board::before {
+  content: '任務'; position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+  font-family: var(--serif); font-size: 72px; color: rgba(249,115,22,.04);
+  pointer-events: none; user-select: none; line-height: 1;
+}
+.mission-board-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; }
+.mission-board-title { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--t3); }
+.mission-date { font-size: 10px; color: var(--t4); font-family: monospace; }
+.mission-list { display: flex; flex-direction: column; gap: 9px; }
+.mission-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 13px; border-radius: 8px;
+  background: var(--s2); border: 1px solid var(--b1);
+  transition: all .2s var(--ease);
+}
+.mission-item.done { opacity: 0.7; }
+.mission-item.done .mission-name { text-decoration: line-through; color: var(--t3); }
+.mission-check {
+  width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--b2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 11px; transition: all .2s;
+}
+.mission-item.done .mission-check { background: var(--gn2); border-color: var(--gn2); color: #fff; }
+.mission-name { font-size: 13px; font-weight: 600; color: var(--t1); flex: 1; }
+.mission-prog-wrap { display: flex; align-items: center; gap: 8px; min-width: 140px; }
+.mission-bar-track { flex: 1; height: 5px; background: var(--s3); border-radius: 3px; overflow: hidden; }
+.mission-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--od), var(--or)); transition: width .6s var(--ease); }
+.mission-item.done .mission-bar-fill { background: linear-gradient(90deg, #14532d, var(--gn2)); }
+.mission-count { font-size: 10px; color: var(--t3); font-family: monospace; white-space: nowrap; }
+.mission-complete-banner {
+  margin-top: 12px; padding: 10px 14px; border-radius: 8px;
+  background: linear-gradient(135deg, rgba(249,115,22,.15), rgba(234,179,8,.1));
+  border: 1px solid rgba(249,115,22,.35); color: var(--or2);
+  font-size: 13px; font-weight: 700; text-align: center;
+  animation: missionPop .5s cubic-bezier(.4,0,.2,1);
+}
+@keyframes missionPop {
+  0% { opacity:0; transform: scale(.95) translateY(4px); }
+  60% { transform: scale(1.02) translateY(0); }
+  100% { opacity:1; transform: none; }
+}
+
+/* ── GENJUTSU micro improvements ── */
+.wq-opt.correct { background:var(--gg); border-color:var(--gn2); color:var(--gn2); animation: correctPulse .5s ease; }
+@keyframes correctPulse { 0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)} 70%{box-shadow:0 0 0 8px rgba(34,197,94,0)} 100%{box-shadow:none} }
+.wq-opt.yours { background:var(--rg); border-color:rgba(220,38,38,.38); color:var(--rd2); text-decoration: line-through; opacity: 0.8; }
+/* Timer display in genjutsu */
+.gj-timer { font-size:11px; color:var(--t3); font-family:monospace; background:var(--s3); padding:2px 7px; border-radius:6px; }
+
 .av-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:9px; margin-bottom:14px }
 .av-opt { border:2px solid var(--b1); border-radius:var(--r); padding:10px 6px; text-align:center; cursor:pointer; transition:all .16s; background:var(--s2) }
 .av-opt:hover { border-color:var(--od) }
@@ -812,9 +908,17 @@ input,textarea,select { font-family:var(--sans) }
 }
 .empty .ei { animation: empBreath 3.5s ease-in-out infinite; display:inline-block; }
 
-/* Sidebar avatar hover spin */
-.sb-av { transition: all .25s var(--ease); }
-.sb-av:hover { transform: rotate(8deg) scale(1.08); }
+/* Avatar upgrade: larger emoji, glow ring, character name */
+.sb-av {
+  width:42px; height:42px; border-radius:50%;
+  background:linear-gradient(135deg,var(--od),var(--or));
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; cursor:pointer; transition:all .18s;
+  border:2px solid transparent; overflow:hidden;
+  box-shadow: 0 3px 10px rgba(249,115,22,.3), inset 0 1px 0 rgba(255,255,255,.1);
+}
+.sb-av .av-emoji { font-size: 22px; line-height: 1; }
+.sb-av:hover { transform:scale(1.08) rotate(5deg); border-color:var(--or); box-shadow:0 0 0 3px rgba(249,115,22,.3), 0 4px 14px rgba(249,115,22,.4); }
 
 /* Sidebar logo icon hover */
 .sb-logo-ic { transition: all .25s var(--ease); }
@@ -920,11 +1024,11 @@ html { scroll-padding-top: 80px; }
   </div>
   <nav class="sb-nav">
     <div class="sb-sec">Main Menu</div>
-    <div class="nv on" onclick="nav('dashPg',this)"><span class="ic">🏯</span><span class="nv-label">Dashboard</span></div>
-    <div class="nv" onclick="nav('scrollsPg',this)"><span class="ic">📜</span><span class="nv-label">Scrolls</span><span class="nb" id="nb-sc">0</span></div>
-    <div class="nv" onclick="nav('perfPg',this)"><span class="ic">🎯</span><span class="nv-label">Ninja Way</span></div>
-    <div class="nv" onclick="nav('genjutsuPg',this)"><span class="ic">👁️</span><span class="nv-label">Genjutsu</span><span class="nb red" id="nb-gj">0</span></div>
-    <div class="nv" onclick="launchSRS()"><span class="ic">🌀</span><span class="nv-label">Train Now</span><span class="nb red" id="nb-due">0</span></div>
+    <div class="nv on" onclick="nav('dashPg',this)"><span class="ic"><svg class="nav-svg" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.4"/><path d="M9 2.5 C9 2.5 5 5.5 5 9 C5 10.8 6.5 12.5 9 12.5 C11.5 12.5 13 10.8 13 9 C13 5.5 9 2.5 9 2.5Z" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M7 9 Q9 7.5 11 9 Q9 10.5 7 9Z" fill="currentColor" opacity="0.6"/></svg></span><span class="nv-label">Dashboard</span></div>
+    <div class="nv" onclick="nav('scrollsPg',this)"><span class="ic"><svg class="nav-svg" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="12" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M6 7h6M6 10h6M6 13h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M3 5.5 Q1.5 5.5 1.5 4 Q1.5 2.5 3 2.5" stroke="currentColor" stroke-width="1.2"/><path d="M15 5.5 Q16.5 5.5 16.5 4 Q16.5 2.5 15 2.5" stroke="currentColor" stroke-width="1.2"/></svg></span><span class="nv-label">Scrolls</span><span class="nb" id="nb-sc">0</span></div>
+    <div class="nv" onclick="nav('perfPg',this)"><span class="ic"><svg class="nav-svg" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 1.5 L10.8 6.5 L16 6.5 L11.8 9.7 L13.5 14.8 L9 11.5 L4.5 14.8 L6.2 9.7 L2 6.5 L7.2 6.5 Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none"/><circle cx="9" cy="8.5" r="1.5" fill="currentColor" opacity="0.5"/></svg></span><span class="nv-label">Ninja Way</span></div>
+    <div class="nv" onclick="nav('genjutsuPg',this)"><span class="ic"><svg class="nav-svg sharingan-svg" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.4"/><circle cx="9" cy="9" r="3.5" stroke="currentColor" stroke-width="1.2"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><path d="M9 5.5 Q10.5 7 9 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12 10.6 Q10.5 9.5 12 10.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M6 10.6 Q7.5 9.5 6 10.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><span class="nv-label">Genjutsu</span><span class="nb red" id="nb-gj">0</span></div>
+    <div class="nv" onclick="launchSRS()"><span class="ic"><svg class="nav-svg rasengan-svg" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.4"/><path d="M9 2 Q13 6 9 9 Q5 12 9 16" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M2 9 Q6 5 9 9 Q12 13 16 9" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/><circle cx="9" cy="9" r="2" stroke="currentColor" stroke-width="1"/></svg></span><span class="nv-label">Train Now</span><span class="nb red" id="nb-due">0</span></div>
     <div class="sb-div"></div>
     <div class="sb-sec">My Scrolls</div>
     <div id="sb-scrolls"></div>
@@ -960,6 +1064,21 @@ html { scroll-padding-top: 80px; }
     </div>
 
     <div id="dash-warnings"></div>
+
+    <!-- MISSION BOARD -->
+    <div class="mission-board" id="mission-board">
+      <div class="mission-board-hd">
+        <div class="mission-board-title">
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style="display:inline-block;vertical-align:middle;margin-right:5px"><path d="M8 1L9.5 5.5H14L10.5 8.5L12 13L8 10.5L4 13L5.5 8.5L2 5.5H6.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none"/></svg>
+          Today's Mission
+        </div>
+        <div class="mission-date" id="mission-date"></div>
+      </div>
+      <div class="mission-list" id="mission-list"></div>
+      <div class="mission-complete-banner" id="mission-complete-banner" style="display:none">
+        🍥 All missions complete! +10 XP bonus claimed!
+      </div>
+    </div>
 
     <div class="chakra-wrap">
       <div class="chakra-header">
@@ -1124,6 +1243,7 @@ html { scroll-padding-top: 80px; }
             </div>
           </div>
         </div>
+        <div id="card-dots" class="card-dots"></div>
         <div id="flash-nav" style="display:flex;gap:8px;margin-bottom:10px">
           <button class="btn bg_ sm" id="b-prev" onclick="prevCard()">← Prev</button>
           <button class="btn bg_ sm" onclick="flipCard()">🔄 Flip</button>
@@ -1132,10 +1252,10 @@ html { scroll-padding-top: 80px; }
         </div>
         <div id="srs-nav" style="display:none;width:100%;max-width:680px">
           <div class="srs-row">
-            <button class="sb s-ag" onclick="rateSRS(0)">❌ Again<small>Reset · key 1</small></button>
-            <button class="sb s-hd" onclick="rateSRS(1)">🌀 Hard<small>+Chakra · key 2</small></button>
-            <button class="sb s-gd" onclick="rateSRS(2)">🗡️ Good<small>Correct · key 3</small></button>
-            <button class="sb s-ez" onclick="rateSRS(3)">⚡ Easy<small>Mastered · key 4</small></button>
+            <button class="sb s-ag" onclick="rateSRS(0)">❌ Again<small><kbd class="kbd">1</kbd> Reset</small></button>
+            <button class="sb s-hd" onclick="rateSRS(1)">🌀 Hard<small><kbd class="kbd">2</kbd> +Chakra</small></button>
+            <button class="sb s-gd" onclick="rateSRS(2)">🗡️ Good<small><kbd class="kbd">3</kbd> Correct</small></button>
+            <button class="sb s-ez" onclick="rateSRS(3)">⚡ Easy<small><kbd class="kbd">4</kbd> Mastered</small></button>
           </div>
           <div class="fhint" id="fhint">🔄 Flip the card first, then rate</div>
         </div>
@@ -1614,11 +1734,11 @@ function nav(pgId,el){
   document.querySelectorAll('.nv').forEach(n=>n.classList.remove('on'));
   if(el)el.classList.add('on');
   const T={
-    dashPg:'🏯 <span class="ac">Dashboard</span>',
-    scrollsPg:'📜 <span class="ac">Scrolls</span>',
-    perfPg:'🎯 <span class="ac">Ninja Way</span>',
-    genjutsuPg:'👁️ <span class="ac">Genjutsu</span>',
-    studyPg:'🌀 <span class="ac">Training</span>'
+    dashPg:'<svg class="nav-svg" style="display:inline-block;vertical-align:middle;margin-right:6px;color:var(--or)" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.4"/><path d="M9 2.5 C9 2.5 5 5.5 5 9 C5 10.8 6.5 12.5 9 12.5 C11.5 12.5 13 10.8 13 9 C13 5.5 9 2.5 9 2.5Z" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M7 9 Q9 7.5 11 9 Q9 10.5 7 9Z" fill="currentColor" opacity="0.6"/></svg><span class="ac">Dashboard</span>',
+    scrollsPg:'<svg class="nav-svg" style="display:inline-block;vertical-align:middle;margin-right:6px;color:var(--or)" viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="12" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M6 7h6M6 10h6M6 13h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg><span class="ac">Scrolls</span>',
+    perfPg:'<svg class="nav-svg" style="display:inline-block;vertical-align:middle;margin-right:6px;color:var(--or)" viewBox="0 0 18 18" fill="none"><path d="M9 1.5 L10.8 6.5 L16 6.5 L11.8 9.7 L13.5 14.8 L9 11.5 L4.5 14.8 L6.2 9.7 L2 6.5 L7.2 6.5 Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg><span class="ac">Ninja Way</span>',
+    genjutsuPg:'<svg class="nav-svg" style="display:inline-block;vertical-align:middle;margin-right:6px;color:var(--or)" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.4"/><circle cx="9" cy="9" r="3.5" stroke="currentColor" stroke-width="1.2"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/></svg><span class="ac">Genjutsu</span>',
+    studyPg:'<svg class="nav-svg" style="display:inline-block;vertical-align:middle;margin-right:6px;color:var(--or)" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.4"/><path d="M9 2 Q13 6 9 9 Q5 12 9 16" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M2 9 Q6 5 9 9 Q12 13 16 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg><span class="ac">Training</span>'
   };
   document.getElementById('tb-t').innerHTML=T[pgId]||'';
   if(pgId==='dashPg')renderDash();
@@ -1718,8 +1838,91 @@ function updateSidebar(){
 // ════════════════════════════════════════════════
 // DASHBOARD
 // ════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// MISSION BOARD
+// ════════════════════════════════════════════════
+let _missionBonusClaimed = false;
+function renderMissionBoard(){
+  const today=todayKey();
+  const log=D.log[today]||{reviewed:0,gjFixed:0};
+  const goal=D.profile?.dailyGoal||20;
+  const reviewed=log.reviewed||0;
+  const gjFixed=log.gjFixed||0;
+  const streak=D.streak?.current||0;
+  
+  const missions=[
+    {id:'cards',name:`Complete ${goal} cards`,current:Math.min(reviewed,goal),total:goal,icon:'⚔️'},
+    {id:'gj',name:`Break 2 Genjutsu`,current:Math.min(gjFixed,2),total:2,icon:'👁️'},
+    {id:'streak',name:`Maintain streak`,current:streak>0?1:0,total:1,icon:'🔥'},
+  ];
+  
+  const allDone=missions.every(m=>m.current>=m.total);
+  
+  // Award bonus XP once per day if all done
+  if(allDone && !_missionBonusClaimed){
+    const bonusKey='mb_'+today;
+    if(!localStorage.getItem(bonusKey)){
+      localStorage.setItem(bonusKey,'1');
+      _missionBonusClaimed=true;
+      setTimeout(()=>{addXP(10);toast('🍥 All missions complete! +10 XP bonus!',4000);},500);
+    } else { _missionBonusClaimed=true; }
+  }
+  
+  const dateEl=document.getElementById('mission-date');
+  if(dateEl) dateEl.textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  
+  const listEl=document.getElementById('mission-list');
+  if(listEl) listEl.innerHTML=missions.map(m=>{
+    const pct=Math.round((m.current/m.total)*100);
+    const done=m.current>=m.total;
+    return`<div class="mission-item ${done?'done':''}">
+      <div class="mission-check">${done?'✓':m.icon}</div>
+      <div class="mission-name">${m.name}</div>
+      <div class="mission-prog-wrap">
+        <div class="mission-bar-track"><div class="mission-bar-fill" style="width:${pct}%"></div></div>
+        <div class="mission-count">${m.current}/${m.total}</div>
+      </div>
+    </div>`;
+  }).join('');
+  
+  const banner=document.getElementById('mission-complete-banner');
+  if(banner) banner.style.display=allDone?'block':'none';
+}
+
+// ════════════════════════════════════════════════
+// MARKDOWN LIGHT PARSER for definitions
+// ════════════════════════════════════════════════
+function renderMD(text){
+  if(!text) return '';
+  return text
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^---$/gm,'<hr>')
+    .replace(/\n\n/g,'<br><br>')
+    .replace(/\n/g,'<br>');
+}
+
+// ════════════════════════════════════════════════
+// PROGRESS DOTS for flashcard
+// ════════════════════════════════════════════════
+function renderProgressDots(){
+  const dotsEl=document.getElementById('card-dots');
+  if(!dotsEl||!deck.length) return;
+  const max=Math.min(deck.length,15); // show max 15 dots
+  if(deck.length<=1){dotsEl.innerHTML='';return;}
+  const step=deck.length>max?Math.ceil(deck.length/max):1;
+  let html='';
+  for(let i=0;i<Math.min(max,deck.length);i++){
+    const idx=i*step;
+    const isCurrent=idx===pos||(i===max-1&&pos>=idx);
+    const isDone=idx<pos;
+    html+=`<div class="card-dot ${isCurrent?'active':isDone?'done':''}"></div>`;
+  }
+  dotsEl.innerHTML=html;
+}
+
 function renderDash(){
-  updateStats();renderChakraBar();renderHeatmap();renderWarnings();
+  updateStats();renderChakraBar();renderHeatmap();renderWarnings();renderMissionBoard();
   const c=document.getElementById('dash-fg');
   const grouped = getGroupedScrolls();
   
@@ -1910,7 +2113,7 @@ function renderScrollDetail(i){
   document.getElementById('scd-mt').textContent=`${ts.length} terms · ${due} due · ${mst} mastered`;
   const si=t=>{if(!t.due)return'<span class="pill p-bl">New</span>';if(isDue(t))return'<span class="pill p-or">Due</span>';if((t.interval||0)>=21)return'<span class="pill p-gn">Master</span>';return'<span class="pill p-yw">Learning</span>'};
   document.getElementById('scd-rows').innerHTML=ts.length
-    ?ts.map((t,ti)=>`<div class="tt-r tt-3"><div class="ttc">${t.term}</div><div class="ttc">${t.def}</div><div class="ttc">${si(t)}<button class="btn br_ xs bic" onclick="delTerm(${i},${ti});event.stopPropagation()" title="Delete">✕</button></div></div>`).join('')
+    ?ts.map((t,ti)=>`<div class="tt-r tt-3"><div class="ttc">${t.term}</div><div class="ttc">${renderMD(t.def)}</div><div class="ttc">${si(t)}<button class="btn br_ xs bic" onclick="delTerm(${i},${ti});event.stopPropagation()" title="Delete">✕</button></div></div>`).join('')
     :'<div class="empty" style="padding:22px"><div class="ei" style="font-size:34px">🈳</div><h3>No terms yet</h3></div>';
   document.getElementById('sc-detail').style.display='block';
   document.getElementById('sc-detail').scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -2031,7 +2234,7 @@ function renderCard(){
   if(!deck.length)return;
   const c=deck[pos];
   document.getElementById('c-term').textContent=c.term;
-  document.getElementById('c-def').innerHTML=c.def;
+  document.getElementById('c-def').innerHTML=renderMD(c.def);
   document.getElementById('c-deck-lbl').textContent=(D.scrolls[studyFI]?.name||'SCROLL').toUpperCase();
   document.getElementById('c-n1').textContent=`${pos+1}/${deck.length}`;
   document.getElementById('c-n2').textContent=`${pos+1}/${deck.length}`;
@@ -2042,6 +2245,7 @@ function renderCard(){
   if(document.getElementById('b-prev'))document.getElementById('b-prev').disabled=pos===0;
   if(document.getElementById('b-next'))document.getElementById('b-next').disabled=pos===deck.length-1;
   if(studyMode==='srs')document.getElementById('fhint').textContent=flipped?'👆 Rate your recall below':'🔄 Click card to reveal definition first';
+  renderProgressDots();
 }
 function flipCard(){
   if(document.getElementById('sdone').classList.contains('on'))return;
@@ -2076,7 +2280,7 @@ function showDone(){
   document.getElementById('dv-go').textContent=sStats.g;document.getElementById('dv-ea').textContent=sStats.e;
   const tot=Object.values(sStats).reduce((a,b)=>a+b,0);
   document.getElementById('done-sub').textContent=`Completed ${deck.length} cards! +${(sStats.g+sStats.e)*3} XP earned 🔥`;
-  updateStats();renderChakraBar();
+  updateStats();renderChakraBar();renderMissionBoard();
 }
 function restartStudy(){deck=shuffle(deck);pos=0;flipped=false;sStats={a:0,h:0,g:0,e:0};document.getElementById('sdone').classList.remove('on');document.getElementById('cinner').classList.remove('fl');switchMode(studyMode)}
 function renderQuizQ(){
@@ -2232,7 +2436,7 @@ function renderGJList(){
               <div class="wq-expand" id="gji-body-${oi}">
                 <div class="wq-body">
                   <div style="font-family:var(--serif);font-size:14px;font-weight:600;color:var(--t1);margin-bottom:11px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word">${wq.question}</div>
-                  <div class="wq-opts-grid">${wq.opts.map((o,oi2)=>`<div class="wq-opt ${oi2===wq.correctIdx?'correct':oi2===wq.yoursIdx&&!wq.solved?'yours':''}"><strong>${o.label}.</strong> ${o.text}</div>`).join('')}</div>
+                  <div class="wq-opts-grid">${wq.opts.map((o,oi2)=>`<div class="wq-opt ${oi2===wq.correctIdx?'correct':oi2===wq.yoursIdx&&!wq.solved?'yours':''}"><strong>${o.label}.</strong> ${o.text}${oi2===wq.correctIdx?' ✓':''}</div>`).join('')}</div>
                   ${wq.explain?`<div class="wq-explain"><strong>💡 Explanation:</strong> ${wq.explain}</div>`:''}
                   <div class="wq-actions">
                     <button class="btn bo xs" onclick="retryOne(${oi})">🔁 Retry</button>
