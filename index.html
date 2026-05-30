@@ -36,8 +36,26 @@ input,textarea,select { font-family:var(--sans) }
 
 /* ── ANIMATED BG ── */
 .bgc { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden }
-.kp { position:absolute; width:1.5px; background:linear-gradient(180deg,var(--or),transparent); border-radius:1px; animation:kfall linear infinite; opacity:0 }
-@keyframes kfall { 0%{transform:translateY(-18px) rotate(28deg);opacity:0} 8%{opacity:.2} 92%{opacity:.06} 100%{transform:translateY(106vh) rotate(28deg);opacity:0} }
+.kp { position:absolute; width:3px; background:linear-gradient(180deg,#fbbf24,#f97316 40%,#dc2626 80%,transparent); border-radius:2px; animation:kfall linear infinite; opacity:0; filter:drop-shadow(0 0 4px rgba(249,115,22,.4)); transform-origin:center }
+.kp::after { content:''; position:absolute; top:-3px; left:50%; transform:translateX(-50%); width:6px; height:6px; background:radial-gradient(circle,#fef3c7,#f97316,transparent); border-radius:50%; filter:blur(1px) }
+
+.fbal { position:absolute; width:10px; height:10px; border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,#fef3c7,#fbbf24 30%,#f97316 60%,#dc2626 80%,transparent);
+  filter:drop-shadow(0 0 8px rgba(249,115,22,.7));
+  animation:fballFall linear infinite; opacity:0; pointer-events:none;
+}
+.fbal::before { content:''; position:absolute; top:-22px; left:50%; transform:translateX(-50%);
+  width:3px; height:22px; background:linear-gradient(180deg,transparent,rgba(249,115,22,.5),rgba(251,191,36,.8));
+  border-radius:50%; filter:blur(.5px);
+}
+@keyframes fballFall {
+  0%   { transform:translateY(-10vh) translateX(0) rotate(0deg);   opacity:0 }
+  12%  { opacity:.95 }
+  85%  { opacity:.85 }
+  100% { transform:translateY(110vh) translateX(var(--dx,30px)) rotate(360deg); opacity:0 }
+}
+
+@keyframes kfall { 0%{transform:translateY(-30px) rotate(25deg);opacity:0} 12%{opacity:.85} 88%{opacity:.5} 100%{transform:translateY(110vh) rotate(25deg);opacity:0} }
 .seal-bg { position:absolute; border-radius:50%; border:1px solid rgba(249,115,22,.04); animation:srot linear infinite }
 @keyframes srot { to{transform:rotate(360deg)} }
 .emb { position:absolute; width:2px; height:2px; border-radius:50%; background:var(--or); animation:embf linear infinite; opacity:0 }
@@ -52,17 +70,23 @@ input,textarea,select { font-family:var(--sans) }
    SIDEBAR
 ══════════════════════════════════════ */
 #sb { background:linear-gradient(180deg,var(--bg2) 0%,var(--s1) 100%); border-right:1px solid var(--b1); display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow:hidden }
-.sb-head { padding:18px 16px 14px; border-bottom:1px solid var(--b1); flex-shrink:0 }
+.sb-head { padding:20px 18px 16px; border-bottom:1px solid var(--b1); flex-shrink:0; background:linear-gradient(180deg,rgba(249,115,22,.03),transparent) }
 .sb-logo-row { display:flex; align-items:center; gap:9px; margin-bottom:2px }
 .sb-logo-ic { width:36px; height:36px; border-radius:9px; background:linear-gradient(135deg,var(--od),var(--or)); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 3px 12px rgba(249,115,22,.32); overflow:hidden; cursor:pointer; transition:all .18s }
 .sb-logo-ic:hover { transform:scale(1.06); box-shadow:0 4px 18px rgba(249,115,22,.45) }
 .sb-logo-nm { font-family:var(--serif); font-size:15px; font-weight:700; color:var(--or) }
 .sb-logo-sub { font-size:9px; color:var(--t4); letter-spacing:3px; text-transform:uppercase; padding-left:45px; margin-top:1px }
 .sb-nav { flex:1; overflow-y:auto; padding:6px 0 }
-.sb-sec { padding:12px 14px 4px; font-size:9px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--t4) }
-.nv { display:flex; align-items:center; gap:9px; padding:9px 14px; font-size:13px; font-weight:600; color:var(--t3); cursor:pointer; transition:background .15s,color .15s; border-left:2.5px solid transparent; border-radius:0 8px 8px 0; margin-right:6px; user-select:none }
-.nv:hover { background:var(--s2); color:var(--t2) }
+.sb-sec { padding:16px 16px 6px; font-size:9px; font-weight:800; letter-spacing:3px; text-transform:uppercase; color:var(--t4) }
+.nv { display:flex; align-items:center; gap:11px; padding:10px 16px; font-size:13px; font-weight:600; color:var(--t3); cursor:pointer; transition:all .2s var(--ease); border-left:2.5px solid transparent; border-radius:0 8px 8px 0; margin:1px 8px 1px 0; user-select:none; position:relative }
+.nv:hover { background:var(--s2); color:var(--t1); transform:translateX(2px) }
+.nv:hover .ic { transform:scale(1.15) }
+.nv .ic { transition:transform .2s var(--ease); display:inline-block }
 .nv.on { background:var(--og); border-left-color:var(--or); color:var(--or) }
+.nv.on .ic { transform:scale(1.1) }
+
+
+
 .nv .ic { width:18px; text-align:center; font-size:13px; flex-shrink:0 }
 .nb { margin-left:auto; font-size:10px; font-family:monospace; background:var(--s3); color:var(--t3); padding:1px 6px; border-radius:8px }
 .nv.on .nb { background:rgba(249,115,22,.2); color:var(--or) }
@@ -71,7 +95,7 @@ input,textarea,select { font-family:var(--sans) }
 .sb-div { height:1px; background:var(--b1); margin:6px 10px }
 /* Hierarchy Sidebar */
 .sb-subj-lbl { font-size: 9px; color: var(--or2); margin: 12px 14px 4px 26px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; }
-.fnv { display:flex; align-items:center; gap:7px; padding:7px 14px 7px 26px; font-size:12px; font-weight:500; color:var(--t4); cursor:pointer; transition:all .15s; border-left:2px solid transparent; border-radius:0 8px 8px 0; margin-right:6px }
+.fnv { display:flex; align-items:center; gap:8px; padding:8px 16px 8px 28px; font-size:12px; font-weight:500; color:var(--t4); cursor:pointer; transition:all .2s var(--ease); border-left:2px solid transparent; border-radius:0 8px 8px 0; margin:1px 8px 1px 0 }
 .fnv:hover { color:var(--t2); background:var(--s2) }
 .fnv.on { color:var(--or2); background:rgba(249,115,22,.08); border-left-color:var(--or2) }
 .sb-bot { padding:12px 14px; border-top:1px solid var(--b1); flex-shrink:0 }
@@ -331,7 +355,7 @@ input,textarea,select { font-family:var(--sans) }
 .wq-item { background:var(--s1); border:1px solid var(--b1); border-radius:var(--r); overflow:hidden; transition:border-color .15s; margin-bottom:9px }
 .wq-item-hd { padding:13px 16px; display:flex; align-items:flex-start; gap:11px; cursor:pointer }
 .wq-cnt-badge { width:26px; height:26px; border-radius:50%; background:var(--rg); border:1px solid rgba(220,38,38,.28); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:var(--rd2); flex-shrink:0; font-family:monospace }
-.wq-q-txt { font-family:var(--serif); font-size:14px; font-weight:600; color:var(--t1); flex:1; line-height:1.4 }
+.wq-q-txt { font-family:var(--serif); font-size:14px; font-weight:600; color:var(--t1); flex:1; line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
 .wq-meta { display:flex; align-items:center; gap:6px; margin-top:5px; flex-wrap:wrap }
 .wq-expand { display:none }
 .wq-item.open .wq-expand { display:block }
@@ -647,6 +671,210 @@ input,textarea,select { font-family:var(--sans) }
 }
 .editable-name-wrap:hover .edit-hint { opacity: 1; }
 
+
+/* ── DYNAMIC INTERACTIONS ── */
+
+/* Page enter animation */
+@keyframes pageFadeIn {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:none; }
+}
+.pg.on { animation: pageFadeIn .35s cubic-bezier(.4,0,.2,1); }
+
+/* Button press ripple */
+.btn { position:relative; overflow:hidden; }
+.btn::after {
+  content:''; position:absolute; inset:0; background:rgba(255,255,255,0);
+  pointer-events:none; transition:background .3s ease;
+}
+.btn:active::after { background:rgba(255,255,255,.1); transition:none; }
+
+/* Button hover lift */
+.btn.bo:hover, .btn.bpu:hover, .btn.bgn:hover, .btn.br_:hover, .btn.bg_:hover {
+  transform: translateY(-1px);
+}
+
+/* Card hover lift effect */
+.dc, .card { transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s, border-color .2s; }
+.dc:hover { transform: translateY(-3px) scale(1.012); }
+
+/* Stat card animation */
+.sc { transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s, border-color .2s; }
+.sc:hover { transform: translateY(-3px); border-color: var(--b2); }
+.sc-val { transition: transform .3s; }
+.sc:hover .sc-val { transform: scale(1.08); }
+
+/* Pill animation */
+.pill { transition: transform .15s; }
+
+/* Topbar pill scale on hover */
+.user-pill { transition: transform .15s, background .15s, border-color .15s; }
+.user-pill:hover { transform: scale(1.03); }
+
+/* Stat number counter pop */
+@keyframes statPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.18); color: var(--or); }
+  100% { transform: scale(1); }
+}
+.sc-val.pop { animation: statPop .55s cubic-bezier(.4,0,.2,1); }
+
+/* Heatmap cell hover */
+.hm-cell { transition: transform .15s, box-shadow .15s; }
+.hm-cell:hover { transform: scale(1.5); box-shadow: 0 0 8px rgba(249,115,22,.5); }
+
+/* Chakra bar pulse when full */
+@keyframes chakraGlow {
+  0%, 100% { box-shadow: 0 0 18px rgba(249,115,22,.5); }
+  50%      { box-shadow: 0 0 28px rgba(249,115,22,.8); }
+}
+.chakra-fill.full { animation: chakraGlow 2s ease infinite; }
+
+/* Sidebar nav active indicator */
+.nv.on::before {
+  content:''; position:absolute; left:-2.5px; top:8px; bottom:8px; width:2.5px;
+  background: linear-gradient(180deg, var(--or2), var(--or));
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(249,115,22,.6);
+}
+
+/* Smooth flip card glow */
+.cinner.fl .cback { box-shadow: 0 12px 60px rgba(249,115,22,.25); }
+
+/* SRS button bounce on click */
+.sb { transition: transform .15s cubic-bezier(.4,0,.2,1) !important; }
+.sb:active { transform: scale(.93) translateY(0) !important; }
+
+/* Genjutsu reading group hover */
+.gj-read-hd { transition: all .2s var(--ease); }
+.gj-read-hd:hover { transform: translateX(2px); }
+
+/* Toast bounce in */
+@keyframes toastSlide {
+  0%   { transform: translateY(80px) scale(.92); opacity: 0; }
+  60%  { transform: translateY(-4px) scale(1.02); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.toast.on { animation: toastSlide .4s cubic-bezier(.4,0,.2,1); }
+
+/* Login card subtle floating animation */
+@keyframes loginFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.login-logo-ic { animation: loginFloat 3s ease-in-out infinite; }
+
+/* Mode tab smooth switch */
+.mt { transition: all .2s var(--ease); }
+.mt.on { transform: scale(1.05); }
+
+/* Filter bar pills */
+.fb { transition: all .18s var(--ease); }
+.fb:hover { transform: translateY(-1px); }
+.fb.on { transform: scale(1.04); box-shadow: 0 2px 12px rgba(249,115,22,.25); }
+
+/* Modal entrance */
+.modal { animation: modalIn .3s cubic-bezier(.4,0,.2,1); }
+@keyframes modalIn {
+  from { opacity:0; transform: translateY(16px) scale(.95); }
+  to   { opacity:1; transform: none; }
+}
+
+/* Avatar option selection ripple */
+.av-opt { transition: all .2s var(--ease); }
+.av-opt:hover { transform: translateY(-2px); }
+.av-opt.on { transform: scale(1.05); }
+.av-opt .av-face-wrap { transition: transform .25s; }
+.av-opt:hover .av-face-wrap { transform: rotate(-5deg) scale(1.06); }
+
+/* Icon picker pop */
+.ico { transition: transform .15s, border-color .14s; }
+.ico:hover { transform: scale(1.15); }
+.ico.on { transform: scale(1.08); }
+
+/* Expandable section smoother */
+.expnd { transition: max-height .4s cubic-bezier(.4,0,.2,1); }
+.expnd.on { max-height: 1200px; }
+
+/* Smooth color transition on focus */
+.fi:focus, .ft:focus, .fs:focus { transform: translateY(-1px); }
+.fi, .ft, .fs { transition: border-color .2s, box-shadow .2s, transform .15s; }
+
+/* Choice label selection animation */
+.choice-lbl { transition: all .2s var(--ease); }
+.choice-lbl:hover { transform: scale(1.1); border-color: var(--or); }
+.choice-lbl.sel { transform: scale(1.1); }
+
+/* Empty state breathe */
+@keyframes empBreath {
+  0%, 100% { transform: scale(1); opacity: .9; }
+  50%      { transform: scale(1.05); opacity: 1; }
+}
+.empty .ei { animation: empBreath 3.5s ease-in-out infinite; display:inline-block; }
+
+/* Sidebar avatar hover spin */
+.sb-av { transition: all .25s var(--ease); }
+.sb-av:hover { transform: rotate(8deg) scale(1.08); }
+
+/* Sidebar logo icon hover */
+.sb-logo-ic { transition: all .25s var(--ease); }
+.sb-logo-ic:hover { transform: rotate(-8deg) scale(1.06); }
+
+/* Donut chart hover */
+.donut-wrap svg path { transition: opacity .2s; cursor: default; }
+.donut-wrap svg path:hover { opacity: 1 !important; }
+
+/* Smooth scroll-into-view feels */
+html { scroll-padding-top: 80px; }
+
+
+@keyframes rippleAnim {
+  to { transform: scale(2.5); opacity: 0; }
+}
+
+
+/* Keyboard hint pill */
+.kbd {
+  display: inline-block; padding: 1px 6px;
+  background: var(--s3); border: 1px solid var(--b2);
+  border-radius: 4px; font-family: monospace; font-size: 10px;
+  color: var(--t2); line-height: 1.4;
+}
+
+
+/* Sidebar logo & user polish */
+.sb-logo-ic {
+  box-shadow: 0 4px 14px rgba(249,115,22,.35), inset 0 1px 0 rgba(255,255,255,.15);
+}
+.sb-av {
+  box-shadow: 0 3px 10px rgba(249,115,22,.3), inset 0 1px 0 rgba(255,255,255,.1);
+}
+
+/* Sidebar nav indicator dot for active items */
+.nv .nb {
+  transition: transform .2s, background .15s, color .15s;
+}
+.nv:hover .nb { transform: scale(1.1); }
+
+/* Cleaner sidebar divider */
+.sb-div {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--b1) 25%, var(--b1) 75%, transparent);
+  margin: 8px 14px;
+  border: none;
+}
+
+/* Sidebar bottom user block */
+.sb-bot {
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--b1);
+  background: linear-gradient(180deg, transparent, rgba(15,21,32,.3));
+}
+
+
+.retry-q { font-family:var(--serif); font-size:18px; font-weight:700; color:var(--t1); margin-bottom:14px; line-height:1.55; white-space:pre-wrap; word-wrap:break-word; }
+.retry-opt { white-space:pre-wrap; word-wrap:break-word; line-height:1.5; }
+
 </style>
 
 <!-- Firebase SDK (compat v9) -->
@@ -951,7 +1179,8 @@ input,textarea,select { font-family:var(--sans) }
         <div class="expnd-in">
           <div style="font-family:var(--serif);font-size:14px;font-weight:700;color:var(--or);margin-bottom:13px">✦ Log a Wrong Answer from CFA Practice</div>
           <div class="fgrp"><label class="flbl">Question</label>
-            <textarea class="ft" id="gj-q" placeholder="Paste the full question here..." style="min-height:80px"></textarea></div>
+            <textarea class="ft" id="gj-q" placeholder="Paste the full question here... Line breaks and indentation are preserved." style="min-height:90px;font-family:var(--sans);line-height:1.55;white-space:pre-wrap"></textarea>
+            <div style="font-size:10px;color:var(--t4);margin-top:5px;font-style:italic">💡 Tip: Line breaks, indentation and table formatting will be preserved when displayed</div></div>
           <div class="fgrp">
             <label class="flbl">Answer Options — click the letter to mark the CORRECT answer</label>
             <div id="choices">
@@ -973,7 +1202,7 @@ input,textarea,select { font-family:var(--sans) }
               <select class="fs" id="gj-topic"><option value="">— Select a Reading —</option></select></div>
           </div>
           <div class="fgrp"><label class="flbl">Explanation (highly recommended — paste from CFA platform)</label>
-            <textarea class="ft" id="gj-exp" placeholder="Why is this answer correct? Paste the explanation here..."></textarea></div>
+            <textarea class="ft" id="gj-exp" placeholder="Why is this answer correct? Paste the explanation here... Formatting preserved." style="min-height:90px;line-height:1.55;white-space:pre-wrap"></textarea></div>
           <div style="display:flex;gap:8px;justify-content:flex-end">
             <button class="btn bg_ sm" onclick="toggleGJForm()">Cancel</button>
             <button class="btn bo sm" onclick="saveGJ()">💾 Save</button>
@@ -1412,10 +1641,20 @@ function openScroll(idx){
 
 function updateStats(){
   const all=allTerms(),due=dueTerms(),mst=masterTerms(),gj=unsolvedGJ();
-  [['s-tot',all.length],['s-mst',mst.length],['s-due',due.length],['s-gj',gj.length],
-   ['nb-due',due.length],['nb-sc',D.scrolls.length],['nb-gj',gj.length],
-   ['d-due',due.length],['d-gj',gj.length]].forEach(([id,v])=>{
-    const el=document.getElementById(id);if(el)el.textContent=v;
+  function setStat(id, v){
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(el.textContent !== String(v)){
+      el.textContent = v;
+      // Only pop the big main stat cards
+      if(['s-tot','s-mst','s-due','s-gj'].includes(id)){
+        el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+      }
+    }
+  }
+  ['s-tot','s-mst','s-due','s-gj','nb-due','nb-sc','nb-gj','d-due','d-gj'].forEach((id,i)=>{
+    const v = [all.length,mst.length,due.length,gj.length,due.length,D.scrolls.length,gj.length,due.length,gj.length][i];
+    setStat(id, v);
   });
 }
 
@@ -1985,14 +2224,14 @@ function renderGJList(){
               <div class="wq-item-hd" onclick="toggleGJItem(${oi})">
                 <div class="wq-cnt-badge">${wq.attempts||'!'}</div>
                 <div style="flex:1;min-width:0">
-                  <div class="wq-q-txt">${wq.question.substring(0,110)}${wq.question.length>110?'…':''}</div>
+                  <div class="wq-q-txt">${(wq.question.replace(/\n/g,' ').substring(0,110))}${wq.question.length>110?'…':''}</div>
                   <div class="wq-meta">${sp}</div>
                 </div>
                 <span style="color:var(--t3);font-size:13px;transition:transform .18s" id="gji-arr-${oi}">▸</span>
               </div>
               <div class="wq-expand" id="gji-body-${oi}">
                 <div class="wq-body">
-                  <div style="font-family:var(--serif);font-size:14px;font-weight:600;color:var(--t1);margin-bottom:11px;line-height:1.5">${wq.question}</div>
+                  <div style="font-family:var(--serif);font-size:14px;font-weight:600;color:var(--t1);margin-bottom:11px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word">${wq.question}</div>
                   <div class="wq-opts-grid">${wq.opts.map((o,oi2)=>`<div class="wq-opt ${oi2===wq.correctIdx?'correct':oi2===wq.yoursIdx&&!wq.solved?'yours':''}"><strong>${o.label}.</strong> ${o.text}</div>`).join('')}</div>
                   ${wq.explain?`<div class="wq-explain"><strong>💡 Explanation:</strong> ${wq.explain}</div>`:''}
                   <div class="wq-actions">
@@ -2317,9 +2556,35 @@ function toggleSidebar(){
 // BG particles
 function initBG(){
   const bg=document.getElementById('bgc');
-  for(let i=0;i<16;i++){const el=document.createElement('div');el.className='kp';el.style.cssText=`left:${Math.random()*100}%;height:${4+~~(Math.random()*13)}px;animation-duration:${5+Math.random()*9}s;animation-delay:${Math.random()*12}s`;bg.appendChild(el)}
-  [[32,22,270,'36s'],[70,54,180,'54s'],[14,68,130,'25s']].forEach(([x,y,sz,d])=>{const s=document.createElement('div');s.className='seal-bg';s.style.cssText=`left:calc(${x}% - ${sz/2}px);top:calc(${y}% - ${sz/2}px);width:${sz}px;height:${sz}px;animation-duration:${d}`;bg.appendChild(s)});
-  for(let i=0;i<8;i++){const el=document.createElement('div');el.className='emb';el.style.cssText=`left:${10+Math.random()*80}%;bottom:${Math.random()*15}%;--dx:${-25+Math.random()*50}px;animation-duration:${3+Math.random()*4}s;animation-delay:${Math.random()*7}s`;bg.appendChild(el)}
+  if(!bg) return;
+  bg.innerHTML='';
+  // Kunai/chakra streaks — bigger & more dramatic
+  for(let i=0;i<20;i++){
+    const el=document.createElement('div');
+    el.className='kp';
+    el.style.cssText=`left:${Math.random()*100}%;height:${18+~~(Math.random()*28)}px;animation-duration:${4+Math.random()*8}s;animation-delay:${Math.random()*10}s;width:${2+Math.random()*2}px`;
+    bg.appendChild(el);
+  }
+  // FIREBALLS — slow descending orange orbs with trail
+  for(let i=0;i<7;i++){
+    const el=document.createElement('div');
+    el.className='fbal';
+    const size=8+~~(Math.random()*14);
+    el.style.cssText=`left:${5+Math.random()*90}%;width:${size}px;height:${size}px;--dx:${-50+Math.random()*100}px;animation-duration:${10+Math.random()*12}s;animation-delay:${Math.random()*16}s`;
+    bg.appendChild(el);
+  }
+  // Decorative seal rings (rotating)
+  [[28,20,300,'40s'],[72,55,220,'58s'],[14,72,160,'28s'],[60,15,140,'32s']].forEach(([x,y,sz,d])=>{
+    const s=document.createElement('div');s.className='seal-bg';
+    s.style.cssText=`left:calc(${x}% - ${sz/2}px);top:calc(${y}% - ${sz/2}px);width:${sz}px;height:${sz}px;animation-duration:${d}`;
+    bg.appendChild(s);
+  });
+  // Floating embers near bottom
+  for(let i=0;i<10;i++){
+    const el=document.createElement('div');el.className='emb';
+    el.style.cssText=`left:${5+Math.random()*90}%;bottom:${Math.random()*20}%;--dx:${-35+Math.random()*70}px;animation-duration:${3.5+Math.random()*5}s;animation-delay:${Math.random()*8}s`;
+    bg.appendChild(el);
+  }
 }
 
 // Init handled by Firebase auth state listener above
@@ -2337,6 +2602,75 @@ function saveScrollName(el){
   // Update document meta if needed
   toast('✅ Renamed to: ' + newName);
 }
+
+// ── Click ripple effect on .btn / .sb buttons ──
+function attachRipples(){
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('.btn, .sb, .nv, .dc, .qopt, .retry-opt');
+    if(!btn) return;
+    if(btn.classList.contains('btn-no-ripple')) return;
+    const rect = btn.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.cssText = `
+      position:absolute; border-radius:50%;
+      background:rgba(255,255,255,.18);
+      width:${size}px; height:${size}px;
+      left:${e.clientX-rect.left-size/2}px;
+      top:${e.clientY-rect.top-size/2}px;
+      transform:scale(0); pointer-events:none;
+      animation:rippleAnim .55s cubic-bezier(.4,0,.2,1);
+      z-index:1;
+    `;
+    const oldPos = getComputedStyle(btn).position;
+    if(oldPos === 'static') btn.style.position = 'relative';
+    const oldOverflow = getComputedStyle(btn).overflow;
+    if(oldOverflow === 'visible') btn.style.overflow = 'hidden';
+    btn.appendChild(ripple);
+    setTimeout(()=>ripple.remove(), 550);
+  }, true);
+}
+attachRipples();
+
+
+// ── Small celebration burst effect ──
+function celebrate(x, y){
+  const colors = ['#fbbf24','#f97316','#22c55e','#3b82f6','#a855f7'];
+  for(let i=0;i<14;i++){
+    const c = document.createElement('div');
+    const angle = (Math.PI*2/14)*i + Math.random()*0.3;
+    const dist = 50+Math.random()*60;
+    const dx = Math.cos(angle)*dist;
+    const dy = Math.sin(angle)*dist;
+    c.style.cssText = `
+      position:fixed; left:${x}px; top:${y}px;
+      width:6px; height:6px; border-radius:50%;
+      background:${colors[i%colors.length]};
+      pointer-events:none; z-index:9999;
+      box-shadow:0 0 6px currentColor;
+    `;
+    document.body.appendChild(c);
+    c.animate(
+      [
+        { transform:'translate(0,0) scale(1)', opacity:1 },
+        { transform:`translate(${dx}px,${dy}px) scale(0)`, opacity:0 }
+      ],
+      { duration: 700+Math.random()*300, easing:'cubic-bezier(.4,0,.2,1)' }
+    );
+    setTimeout(()=>c.remove(), 1100);
+  }
+}
+
+// Hook into markGJSolved and successful rate
+const _origMarkSolved = window.markGJSolved;
+if(typeof _origMarkSolved === 'function'){
+  window.markGJSolved = function(i){
+    const btn = event && event.target;
+    if(btn){const r=btn.getBoundingClientRect();celebrate(r.left+r.width/2, r.top+r.height/2);}
+    _origMarkSolved(i);
+  };
+}
+
 </script>
 </body>
 </html>
