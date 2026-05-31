@@ -2490,7 +2490,7 @@ function saveGJ(){
   const linkedScroll = D.scrolls.find(s => s.name === topicVal);
   const subjectKey  = linkedScroll ? (linkedScroll.subject || '') : '';
   const subjectName = linkedScroll ? (SUBJECT_NAMES[subjectKey] || subjectKey) : '';
-  D.genjutsu.push({id:Date.now(),question:q,opts:inputs.map((v,i)=>({label:LBLS[i],text:v})).filter(o=>o.text),correctIdx,yoursIdx,topic:topicVal,subject:subjectKey,subjectName,explain:document.getElementById('gj-explain').value.trim(),solved:false,attempts:0,createdAt:Date.now()});
+  D.genjutsu.push({id:Date.now(),question:q,opts:inputs.map((v,i)=>({label:LBLS[i],text:v})).filter(o=>o.text),correctIdx,yoursIdx,topic:topicVal,subject:subjectKey,subjectName,explain:document.getElementById('gj-explain').value.trim(),solved:false,attempts:1,createdAt:Date.now()});
   saveD();toggleGJForm();renderGJList();updateStats();toast('💾 Saved!');
 }
 function setGJF(f,el){gjFilter=f;document.querySelectorAll('.fb[data-f]').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderGJList()}
@@ -2500,7 +2500,7 @@ function renderGJList(){
 
   // Apply status filter
   if(statusFilter==='unsolved')     list = list.filter(q=>!q.solved);
-  else if(statusFilter==='trend')   list = list.filter(q=>!q.solved&&q.attempts>=2);
+  else if(statusFilter==='trend')   list = list.filter(q=>!q.solved && (q.attempts||0)>=2);
   else if(statusFilter==='solved')  list = list.filter(q=>q.solved);
 
   const c = document.getElementById('gj-list');
@@ -2541,24 +2541,30 @@ function renderGJList(){
           <div class="gj-read-nm">📖 ${rdName}</div>
           ${statusPill}
           <span class="gj-read-cnt">${items.length} Q</span>
-          <button class="btn bpu xs" onclick="startRetryReading(${JSON.stringify(rdName)});event.stopPropagation()" style="padding:3px 10px;font-size:11px">🔁 Retry</button>
+          ${unsolved>0
+            ? `<button class="btn bpu xs" onclick="startRetryReading(${JSON.stringify(rdName)},false);event.stopPropagation()" style="padding:3px 10px;font-size:11px">🔁 Retry Unsolved (${unsolved})</button>`
+            : `<button class="btn bg_ xs" onclick="startRetryReading(${JSON.stringify(rdName)},true);event.stopPropagation()" style="padding:3px 10px;font-size:11px">🔁 Retry All</button>`
+          }
           <span class="gj-read-arr">▸</span>
         </div>
         <div class="gj-read-body" id="${grpId}">
           <div class="gj-read-actions">
             <span style="font-size:11px;color:var(--t2)">${items.length} wrong answer${items.length>1?'s':''} in this reading</span>
-            <button class="btn bpu sm" onclick="startRetryReading(${JSON.stringify(rdName)})">🔁 Retry This Reading</button>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              ${unsolved>0 ? `<button class="btn bpu sm" onclick="startRetryReading(${JSON.stringify(rdName)},false)">🔁 Retry Unsolved (${unsolved})</button>` : ''}
+              <button class="btn bg_ sm" onclick="startRetryReading(${JSON.stringify(rdName)},true)">🔁 Retry All (${items.length})</button>
+            </div>
           </div>
           ${items.map(wq => {
             const oi = (D.genjutsu||[]).indexOf(wq);
             const sp = wq.solved
               ? '<span class="pill p-gn">✅ Broken</span>'
-              : wq.attempts>=3
-                ? `<span class="pill p-rd">⚠️ ${wq.attempts}×</span>`
+              : (wq.attempts||0)>=2
+                ? `<span class="pill p-rd">⚠️ Failed ${wq.attempts}×</span>`
                 : '<span class="pill p-pu">🔴 Unsolved</span>';
             return `<div class="wq-item" id="gji-${oi}" style="border-radius:0;border-left:none;border-right:none;border-bottom:none;border-top:1px solid rgba(31,45,69,.35)">
               <div class="wq-item-hd" onclick="toggleGJItem(${oi})">
-                <div class="wq-cnt-badge">${wq.attempts||'!'}</div>
+                <div class="wq-cnt-badge">${wq.attempts||1}</div>
                 <div style="flex:1;min-width:0">
                   <div class="wq-q-txt">${(wq.question.replace(/\n/g,' ').substring(0,110))}${wq.question.length>110?'…':''}</div>
                   <div class="wq-meta">${sp}</div>
@@ -2595,9 +2601,17 @@ function toggleGJReading(grpId){
   hd.classList.toggle('open', isOpen);
 }
 
-function startRetryReading(rdName){
-  retryList = shuffle((D.genjutsu||[]).filter(q=>!q.solved && q.topic===rdName));
-  if(!retryList.length){ toast(`🎉 No unsolved questions in "${rdName}"!`); return; }
+function startRetryReading(rdName, all){
+  const pool = (D.genjutsu||[]).filter(q => q.topic===rdName && (all || !q.solved));
+  if(!pool.length){
+    // fallback: retry all including solved
+    const allPool = (D.genjutsu||[]).filter(q => q.topic===rdName);
+    if(!allPool.length){ toast(`No questions found in this reading.`); return; }
+    retryList = shuffle(allPool);
+    toast(`🔁 All questions in reading already broken — retrying all!`, 2200);
+  } else {
+    retryList = shuffle(pool);
+  }
   retryPos = 0;
   document.getElementById('gj-list-view').style.display  = 'none';
   document.getElementById('gj-retry-view').style.display = 'block';
@@ -2627,7 +2641,7 @@ function renderRetryCard(){
   document.getElementById('rty-pbar').style.width=pct+'%';
   const oi=(D.genjutsu||[]).indexOf(wq);
   document.getElementById('rty-card').innerHTML=`<div class="retry-card">
-    <div class="retry-tag">${wq.topic||'CFA Practice'}${wq.attempts?` · Failed ${wq.attempts}×`:''}</div>
+    <div class="retry-tag">${wq.topic||'CFA Practice'}${(wq.attempts||0)>1?` · Failed ${wq.attempts}×`:''}</div>
     <div class="retry-q">${wq.question}</div>
     <div class="retry-opts" id="rty-opts">${wq.opts.map((o,oi2)=>`<button class="retry-opt" data-oi="${oi2}" onclick="pickRetry(this,${oi2},${oi},${wq.correctIdx})">${o.label}. ${o.text}</button>`).join('')}</div>
     ${wq.explain?`<div class="retry-exp" id="rty-exp"><strong style="color:var(--or2)">💡 Explanation:</strong> ${wq.explain}</div>`:''}
