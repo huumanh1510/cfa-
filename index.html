@@ -60,9 +60,6 @@ input,textarea,select { font-family:var(--sans) }
 @keyframes srot { to{transform:rotate(360deg)} }
 .emb { position:absolute; width:2px; height:2px; border-radius:50%; background:var(--or); animation:embf linear infinite; opacity:0 }
 @keyframes embf { 0%{transform:translateY(0) translateX(0);opacity:0} 18%{opacity:.4} 100%{transform:translateY(-100px) translateX(var(--dx));opacity:0} }
-@media (prefers-reduced-motion: reduce) { .kp,.fbal,.seal-bg,.emb{animation:none!important;opacity:0!important} }
-body.focus-mode .kp,body.focus-mode .fbal,body.focus-mode .seal-bg,body.focus-mode .emb{opacity:0!important;animation:none!important}
-#mt-focus.on{background:var(--og);color:var(--or);border-color:var(--or)}
 
 /* ── LAYOUT ── */
 #app { display:grid; grid-template-columns:252px 1fr; min-height:100vh; position:relative; z-index:1 }
@@ -609,28 +606,8 @@ body.focus-mode .kp,body.focus-mode .fbal,body.focus-mode .seal-bg,body.focus-mo
 #app.sb-col .sb-div { margin: 4px 4px; }
 #app.sb-col .sb-nav { padding: 4px 0; }
 
-/* ── MOBILE RESPONSIVE ── */
-@media (max-width: 768px) {
-  #app { grid-template-columns: 1fr !important; }
-  #sb { position:fixed; left:-260px; top:0; height:100vh; z-index:200; transition:left .3s ease; width:252px !important; }
-  #sb.open { left:0; }
-  .sb-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:199; }
-  #sb.open ~ .sb-overlay { display:block; }
-  .mobile-menu-btn { display:flex !important; }
-  .scene { height:260px !important; }
-  .qopts { grid-template-columns:1fr !important; }
-  .srs-row { flex-wrap:wrap; }
-  .fg { grid-template-columns:1fr !important; }
-}
-.mobile-menu-btn { display:none; position:fixed; top:12px; left:12px; z-index:198; background:var(--s2); border:1px solid var(--b2); border-radius:8px; padding:8px 10px; font-size:16px; cursor:pointer; color:var(--t1); }
 
-/* ── CUSTOM CONFIRM MODAL ── */
-.confirm-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
-.confirm-box { background:var(--s2); border:1px solid var(--b2); border-radius:var(--rl); padding:28px 32px; max-width:380px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.6); }
-.confirm-box h3 { font-size:16px; font-weight:700; color:var(--t1); margin-bottom:10px; }
-.confirm-box p { font-size:14px; color:var(--t2); margin-bottom:22px; line-height:1.5; }
-.confirm-btns { display:flex; gap:10px; justify-content:flex-end; }
-
+/* ── FIREBASE LOGIN SCREEN ── */
 #login-screen {
   position: fixed; inset: 0;
   background: var(--bg);
@@ -1022,6 +999,41 @@ html { scroll-padding-top: 80px; }
 .retry-next.on { max-height:80px; opacity:1; }
 .retry-opt { white-space:pre-wrap; word-wrap:break-word; line-height:1.5; }
 
+/* ── FOCUS MODE ── */
+.focus-mode-btn { font-size:12px; padding:5px 12px; }
+body.focus-mode .kp,
+body.focus-mode .fbal,
+body.focus-mode .seal-bg,
+body.focus-mode .emb { opacity:0!important; animation:none!important; }
+@media (prefers-reduced-motion: reduce) {
+  .kp,.fbal,.seal-bg,.emb { animation:none!important; opacity:0!important; }
+}
+
+/* ── CUSTOM CONFIRM MODAL ── */
+#confirm-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.82); backdrop-filter:blur(8px); z-index:9000; align-items:center; justify-content:center; }
+#confirm-modal.on { display:flex; }
+.confirm-box { background:var(--s1); border:1px solid var(--b1); border-radius:var(--rl); padding:26px 28px; width:360px; box-shadow:0 24px 80px rgba(0,0,0,.65); animation:mIn .2s ease; }
+.confirm-msg { font-size:15px; color:var(--t1); line-height:1.5; margin-bottom:20px; }
+.confirm-ft { display:flex; gap:9px; justify-content:flex-end; }
+
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 768px) {
+  #app { grid-template-columns: 1fr; }
+  #sb { position:fixed; left:-270px; top:0; height:100vh; z-index:100; transition:left .3s ease; width:252px!important; }
+  #sb.mob-open { left:0; box-shadow:4px 0 24px rgba(0,0,0,.6); }
+  .sb-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:99; }
+  .sb-overlay.on { display:block; }
+  .mob-menu-btn { display:flex!important; }
+  .pg { padding:16px; }
+  .sg4 { grid-template-columns:repeat(2,1fr); }
+  .frow { flex-direction:column; }
+  .srs-row { gap:5px; }
+  .sb .text { display:none; }
+}
+@media (min-width: 769px) {
+  .mob-menu-btn { display:none!important; }
+}
+
 </style>
 
 <!-- Firebase SDK (compat v9) -->
@@ -1055,8 +1067,7 @@ html { scroll-padding-top: 80px; }
 </div>
 
 <div id="app" style="display:none">
-<button class="mobile-menu-btn" onclick="toggleMobileSidebar()" id="mobile-menu-btn">☰</button>
-<div class="sb-overlay" id="sb-overlay" onclick="toggleMobileSidebar()"></div>
+
 <aside id="sb">
   <div class="sb-head">
     <div class="sb-logo-row">
@@ -1091,9 +1102,11 @@ html { scroll-padding-top: 80px; }
     </div>
   </div>
 </aside>
+<div class="sb-overlay" id="sb-overlay" onclick="toggleMobSidebar()"></div>
 
 <div id="main">
   <div class="topbar">
+    <button class="btn bg_ sm mob-menu-btn" onclick="toggleMobSidebar()" style="display:none;padding:6px 10px">☰</button>
     <div class="tb-t" id="tb-t">🏯 <span class="ac">Dashboard</span></div>
     <div id="tb-r"><div id="user-pill" class="user-pill" onclick="signOut()" style="display:none" title="Sign out"><div class="user-av-emoji" id="topbar-av" style="background:linear-gradient(135deg,#7c3910,#f97316)">🥷</div><span class="user-name" id="topbar-name">Ninja</span><span class="sync-dot" id="sync-dot" title="Data synced"></span></div></div>
   </div>
@@ -1104,7 +1117,10 @@ html { scroll-padding-top: 80px; }
         <h1 id="dash-hi">Welcome back, Ninja! 忍</h1>
         <p><strong id="d-due">0</strong> cards due · <strong id="d-gj" style="color:var(--pu2)">0</strong> Genjutsu pending</p>
       </div>
-      <button class="btn bo" onclick="launchSRS()">🌀 Start Training</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn bo" onclick="launchSRS()">🌀 Start Training</button>
+        <button class="btn bg_" onclick="launchGlobalSRS()" title="Train all due cards from every scroll at once">🌍 Global SRS</button>
+      </div>
     </div>
 
     <div id="dash-warnings"></div>
@@ -1125,6 +1141,11 @@ html { scroll-padding-top: 80px; }
       <div class="sc s-pu"><div class="sc-ico" style="font-size:22px;opacity:0.2">👁️</div><div class="sc-val" id="s-gj">0</div><div class="sc-lbl">Genjutsu</div></div>
     </div>
 
+    <div id="weak-subj-widget" style="margin-bottom:18px;display:none">
+      <div class="sh"><h2>⚠️ Weak Subjects — Focus Here</h2></div>
+      <div id="weak-subj-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px"></div>
+    </div>
+
     <div class="heatmap-wrap">
       <div class="hm-header">
         <div class="hm-title">📅 Training Log</div>
@@ -1142,7 +1163,6 @@ html { scroll-padding-top: 80px; }
     </div>
 
     <div class="sh"><h2>📜 My Readings by Subject</h2></div>
-    <div id="weak-subj-widget"></div>
     <div class="fg" id="dash-fg">
       <div class="empty" style="grid-column:1/-1"><div class="ei">📜</div><h3>No scrolls yet</h3><p>Create a scroll or get started with the form above!</p></div>
     </div>
@@ -1246,11 +1266,11 @@ html { scroll-padding-top: 80px; }
         <div class="st-prog-info"><span id="sp-pos">0/0</span><span id="sp-pct">0%</span></div>
         <div class="st-prog-track"><div class="st-prog-bar" id="sp-bar" style="width:0%"></div></div>
       </div>
+      <button class="btn bg_ sm focus-mode-btn" id="focus-btn" onclick="toggleFocusMode()" title="Toggle Focus Mode — hides background animations">🎯 Focus</button>
       <div class="msw">
         <div class="mt on" id="mt-flash" onclick="switchMode('flash')">🃏 Flash</div>
         <div class="mt" id="mt-quiz" onclick="switchMode('quiz')">📝 Quiz</div>
         <div class="mt" id="mt-srs" onclick="switchMode('srs')">🌀 SRS</div>
-        <div class="mt" id="mt-focus" onclick="toggleFocusMode()" title="Toggle Focus Mode">🎯</div>
       </div>
     </div>
     <div class="sbody" id="sbody">
@@ -1532,6 +1552,17 @@ html { scroll-padding-top: 80px; }
   </div>
 </div>
 
+<!-- ══ CUSTOM CONFIRM MODAL ══ -->
+<div id="confirm-modal" onclick="if(event.target===this)_confirmCancel()">
+  <div class="confirm-box">
+    <div class="confirm-msg" id="confirm-msg">Are you sure?</div>
+    <div class="confirm-ft">
+      <button class="btn bg_ sm" onclick="_confirmCancel()">Cancel</button>
+      <button class="btn br_ sm" id="confirm-ok-btn" onclick="_confirmOk()">Delete</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1609,19 +1640,24 @@ function signIn(){
     });
 }
 function signOut(){
-  if(!confirm('Sign out?')) return;
-  fbAuth.signOut();
+  showConfirm('Sign out of CFA Ninja?',()=>fbAuth.signOut(),'Sign Out',false);
 }
 
 // ── initApp: called after data loaded ──
 function initApp(){
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app').style.display='grid';
-  initBG();if(localStorage.getItem('focus_mode')==='1'){document.body.classList.add('focus-mode');}updateSidebar();renderDash();renderHeatmap();
+  initBG();updateSidebar();renderDash();renderHeatmap();
   if(localStorage.getItem('sb_collapsed')==='1'){
     document.getElementById('app').classList.add('sb-col');
     const b=document.getElementById('sb-toggle');
     if(b){b.textContent='→';b.title='Expand sidebar';}
+  }
+  // Restore focus mode
+  if(localStorage.getItem('focus_mode')==='1'){
+    document.body.classList.add('focus-mode');
+    const btn=document.getElementById('focus-btn');
+    if(btn){btn.textContent='✨ Focus Off';btn.classList.add('bo');}
   }
 }
 function showLoginScreen(){
@@ -1807,8 +1843,6 @@ function resizeAndUploadImage(file, maxSize, callback) {
 let curPage='dashPg',CD=-1,studyFI=-1,studyMode='srs';
 
 function nav(pgId,el){
-  // Close mobile sidebar if open
-  const sb=document.getElementById('sb');if(sb)sb.classList.remove('open');
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
   document.getElementById(pgId).classList.add('on');
   curPage=pgId;
@@ -2010,18 +2044,33 @@ function getWeakSubjects(){
     stats[sub].total++;
     if(!q.solved)stats[sub].unsolved++;
   });
-  return Object.entries(stats).map(([name,s])=>({name,weakScore:s.total>0?Math.round(s.unsolved/s.total*100):0,unsolved:s.unsolved,total:s.total})).sort((a,b)=>b.weakScore-a.weakScore).slice(0,3);
+  return Object.entries(stats)
+    .map(([name,s])=>({name,weakScore:s.total>0?Math.round(s.unsolved/s.total*100):0,unsolved:s.unsolved,total:s.total}))
+    .filter(s=>s.total>0)
+    .sort((a,b)=>b.weakScore-a.weakScore)
+    .slice(0,3);
 }
 function renderWeakSubjects(){
-  const w=document.getElementById('weak-subj-widget');
-  if(!w)return;
-  const ws=getWeakSubjects();
-  if(!ws.length){w.innerHTML='';return;}
-  const bars=ws.map(s=>{
-    const col=s.weakScore>=70?'var(--rd2)':s.weakScore>=40?'var(--yw2)':'var(--or2)';
-    return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:13px;font-weight:600;color:var(--t1)">${s.name}</span><span style="font-size:12px;color:${col};font-weight:700">${s.weakScore}% wrong (${s.unsolved}/${s.total})</span></div><div style="height:6px;background:var(--b1);border-radius:3px;overflow:hidden"><div style="height:100%;width:${s.weakScore}%;background:${col};border-radius:3px;transition:width .4s"></div></div></div>`;
-  }).join('');
-  w.innerHTML=`<div style="background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:16px 20px;margin-bottom:18px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="font-size:16px">🎯</span><h3 style="font-size:14px;font-weight:700;color:var(--t1);margin:0">Top Weak Subjects</h3><span style="font-size:11px;color:var(--t3);margin-left:auto">Based on Genjutsu data</span></div>${bars}</div>`;
+  const widget=document.getElementById('weak-subj-widget');
+  const list=document.getElementById('weak-subj-list');
+  if(!widget||!list)return;
+  const weak=getWeakSubjects();
+  if(!weak.length){widget.style.display='none';return;}
+  widget.style.display='block';
+  const scoreColor=s=>s>=70?'var(--rd2)':s>=40?'var(--yw2)':'var(--gn2)';
+  const scoreLabel=s=>s>=70?'Critical':'Needs Work';
+  list.innerHTML=weak.map((s,i)=>`
+    <div class="sc" style="border-top:3px solid ${scoreColor(s.weakScore)};padding:14px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase">#${i+1} ${scoreLabel(s.weakScore)}</span>
+        <span style="font-size:20px;font-weight:800;font-family:var(--serif);color:${scoreColor(s.weakScore)}">${s.weakScore}%</span>
+      </div>
+      <div style="font-family:var(--serif);font-size:13px;font-weight:700;color:var(--t1);margin-bottom:4px;line-height:1.3">${s.name}</div>
+      <div style="font-size:12px;color:var(--t3)">${s.unsolved} unsolved / ${s.total} total Genjutsu</div>
+      <div style="height:3px;background:var(--s3);border-radius:2px;margin-top:8px">
+        <div style="height:100%;border-radius:2px;background:${scoreColor(s.weakScore)};width:${s.weakScore}%;transition:width .6s"></div>
+      </div>
+    </div>`).join('');
 }
 function renderDash(){
   updateStats();renderChakraBar();renderHeatmap();renderWarnings();renderWeakSubjects();
@@ -2161,7 +2210,7 @@ function createScroll(){
 }
 
 function delScroll(i){
-  showConfirm(`Delete scroll "<strong>${D.scrolls[i].name}</strong>"? This cannot be undone.`,()=>{
+  showConfirm(`Delete scroll "${D.scrolls[i]?.name}"? This cannot be undone.`,()=>{
     D.scrolls.splice(i,1);saveD();CD=-1;
     document.getElementById('sc-detail').style.display='none';
     nav('scrollsPg',document.querySelectorAll('.nv')[1]);toast('🗑 Scroll deleted');
@@ -2382,27 +2431,43 @@ function study(fi,mode){
   else{deck=ts.map((t,i)=>({...t,_oi:i}))}
   if(!deck.length){toast('⚠️ This scroll is empty!');openScroll(fi);return}
   const maxSess=D.profile?.maxSession||20;
-  if(mode==='srs'&&deck.length>maxSess){deck.sort((a,b)=>(a.due||0)-(b.due||0));deck=shuffle(deck.slice(0,maxSess));toast(`📚 Showing ${maxSess} cards (overdue-first). ${ts.filter(isDue).length-maxSess} more due.`,3000)}
-  deck=shuffle(deck);pos=0;flipped=false;
+  if(mode==='srs'&&deck.length>maxSess){
+    // Sort overdue-first (smallest due timestamp = overdue longest), then take top N, then shuffle
+    deck.sort((a,b)=>(a.due||0)-(b.due||0));
+    deck=shuffle(deck.slice(0,maxSess));
+    toast(`📚 Showing ${maxSess} most overdue cards. ${ts.filter(isDue).length-maxSess} more due.`,3000);
+  } else {
+    deck=shuffle(deck);
+  }
+  pos=0;flipped=false;
   qDeck=shuffle([...deck]);qPos=0;
   switchMode(mode);
 }
 function launchSRS(){
   if(!D.scrolls.length){toast('⚠️ No scrolls yet! Create one or load demo.');return}
-  const allDue=D.scrolls.flatMap((s,si)=>(s.terms||[]).filter(isDue).map((t,oi)=>({...t,_si:si,_oi:(s.terms||[]).indexOf(t)})));
-  if(!allDue.length){toast('✅ No cards due today! Come back tomorrow.');return}
-  // Sort most overdue first, then shuffle within the session cap
+  const best=D.scrolls.map((s,i)=>({i,due:(s.terms||[]).filter(isDue).length})).sort((a,b)=>b.due-a.due)[0];
+  if(!best.due){toast('✅ No cards due today! Come back tomorrow.');return}
+  study(best.i,'srs');
+}
+function launchGlobalSRS(){
+  if(!D.scrolls.length){toast('⚠️ No scrolls yet!');return}
+  // Collect all due terms across every scroll, preserving _si (scroll index) and _oi (term index)
+  const allDue=D.scrolls.flatMap((s,si)=>
+    (s.terms||[])
+      .map((t,oi)=>({...t,_si:si,_oi:oi}))
+      .filter(t=>isDue(t))
+  );
+  if(!allDue.length){toast('✅ No cards due today across all scrolls!');return}
+  // Sort overdue-first then cap at maxSession
   allDue.sort((a,b)=>(a.due||0)-(b.due||0));
   const maxSess=D.profile?.maxSession||20;
-  const best=D.scrolls.map((s,i)=>({i,due:(s.terms||[]).filter(isDue).length})).sort((a,b)=>b.due-a.due)[0];
-  studyFI=best.i;studyMode='srs';sStats={a:0,h:0,g:0,e:0};
-  const s=D.scrolls[best.i];
-  document.getElementById('st-lbl').innerHTML=`<span style="width:16px;height:16px;display:inline-block">${renderIcon(s.icon)}</span> All Due Cards`;
-  nav('studyPg',null);
-  document.getElementById('tb-t').innerHTML=`⚔️ <span class="ac">Global SRS</span>`;
   deck=shuffle(allDue.slice(0,maxSess));
-  if(allDue.length>maxSess)toast(`📚 ${maxSess} of ${allDue.length} due cards (overdue-first across all scrolls)`,3000);
-  pos=0;flipped=false;
+  pos=0;flipped=false;sStats={a:0,h:0,g:0,e:0};
+  studyFI=-1;studyMode='srs';
+  document.getElementById('st-lbl').innerHTML=`🌍 Global SRS`;
+  nav('studyPg',null);
+  document.getElementById('tb-t').innerHTML=`⚔️ <span class="ac">Global SRS — All Scrolls</span>`;
+  if(allDue.length>maxSess) toast(`📚 Showing ${maxSess} most overdue cards from all scrolls. ${allDue.length-maxSess} more due.`,3500);
   qDeck=shuffle([...deck]);qPos=0;
   switchMode('srs');
 }
@@ -2430,7 +2495,8 @@ function renderCard(){
   const c=deck[pos];
   document.getElementById('c-term').textContent=c.term;
   document.getElementById('c-def').innerHTML=renderMD(c.def);
-  document.getElementById('c-deck-lbl').textContent=(D.scrolls[studyFI]?.name||'SCROLL').toUpperCase();
+  const si=c._si!==undefined?c._si:studyFI;
+  document.getElementById('c-deck-lbl').textContent=(D.scrolls[si]?.name||'SCROLL').toUpperCase();
   document.getElementById('c-n1').textContent=`${pos+1}/${deck.length}`;
   document.getElementById('c-n2').textContent=`${pos+1}/${deck.length}`;
   const pct=deck.length>1?Math.round(pos/(deck.length-1)*100):100;
@@ -2453,14 +2519,16 @@ function shuffleDeck(){deck=shuffle(deck);pos=0;flipped=false;document.getElemen
 function rateSRS(r){
   if(!flipped){toast('⚠️ Flip the card first!');return}
   const c=deck[pos];
-  const orig=D.scrolls[studyFI]?.terms[c._oi];
+  // Support global mode: card has _si (scroll index); single-scroll mode uses studyFI
+  const si=c._si!==undefined?c._si:studyFI;
+  const orig=D.scrolls[si]?.terms[c._oi];
   if(orig)Object.assign(orig,smNext(r,orig));
   if(r===0)sStats.a++;else if(r===1)sStats.h++;else if(r===2)sStats.g++;else sStats.e++;
   logToday('reviewed');logToday(['again','hard','good','easy'][r]);
   updateStreak();addXP(r===0?1:r===1?2:r===2?3:5);saveD();
   flipped=false;document.getElementById('cinner').classList.remove('fl');document.getElementById('fhint').textContent='';
   if(pos<deck.length-1){pos++;renderCard()}else showDone();
-  if(r===0){// auto-add to genjutsu if Again 3 times on same term
+  if(r===0){
     const gj=D.genjutsu.find(g=>g.autoTerm===c.term&&!g.solved);
     if(gj){gj.attempts=(gj.attempts||0)+1}else if(c.term){
       D.genjutsu.push({id:Date.now(),autoTerm:c.term,question:`[Auto] Term: ${c.term}`,opts:[{label:'A',text:c.def}],correctIdx:0,yoursIdx:-1,topic:'',explain:'',solved:false,attempts:1,auto:true,createdAt:Date.now()});
@@ -2484,9 +2552,17 @@ function renderQuizQ(){
   const q=qDeck[qPos];
   document.getElementById('qq-t').textContent=q.term;
   const all=D.scrolls[studyFI]?.terms||[];
-  const sameSubject=D.scrolls.filter(s=>s.subject===D.scrolls[studyFI]?.subject).flatMap(s=>s.terms||[]).filter(t=>t.term!==q.term);
-  let distractors=sameSubject.sort(()=>Math.random()-.5).slice(0,3);
-  if(distractors.length<3){const extras=all.filter(t=>t.term!==q.term&&!distractors.find(d=>d.term===t.term)).sort(()=>Math.random()-.5).slice(0,3-distractors.length);distractors=[...distractors,...extras];}
+  // Prefer same-subject distractors for harder, more realistic questions
+  const curSubject=D.scrolls[studyFI]?.subject||'';
+  const sameSubjTerms=D.scrolls
+    .filter(s=>s.subject===curSubject)
+    .flatMap(s=>s.terms||[])
+    .filter(t=>t.term!==q.term);
+  let distractors=shuffle(sameSubjTerms).slice(0,3);
+  if(distractors.length<3){
+    const allOthers=allTerms().filter(t=>t.term!==q.term&&!distractors.some(d=>d.term===t.term));
+    distractors=[...distractors,...shuffle(allOthers).slice(0,3-distractors.length)];
+  }
   const opts=shuffle([...distractors,{term:q.term,def:q.def}]);
   const pct=qDeck.length>1?Math.round(qPos/(qDeck.length-1)*100):100;
   document.getElementById('sp-pos').textContent=`${qPos+1} / ${qDeck.length}`;document.getElementById('sp-pct').textContent=pct+'%';document.getElementById('sp-bar').style.width=pct+'%';
@@ -2694,11 +2770,12 @@ function toggleGJItem(i){
   if(item){item.classList.toggle('open');if(arr)arr.style.transform=item.classList.contains('open')?'rotate(90deg)':'';}
 }
 function markGJSolved(i){
-  if(!confirm('Mark as broken (solved)?'))return;
-  D.genjutsu[i].solved=true;D.genjutsu[i].solvedAt=Date.now();
-  logToday('gjFixed');saveD();renderGJList();updateStats();addXP(5);toast('✅ Genjutsu broken! +5 XP');
+  showConfirm('Mark this question as broken (solved)?',()=>{
+    D.genjutsu[i].solved=true;D.genjutsu[i].solvedAt=Date.now();
+    logToday('gjFixed');saveD();renderGJList();updateStats();addXP(5);toast('✅ Genjutsu broken! +5 XP');
+  },'Mark Broken',false);
 }
-function delGJ(i){showConfirm('Delete this question?',()=>{D.genjutsu.splice(i,1);saveD();renderGJList();updateStats();toast('🗑 Deleted');})}
+function delGJ(i){showConfirm('Delete this question?',()=>{D.genjutsu.splice(i,1);saveD();renderGJList();updateStats();toast('🗑 Deleted')});}
 
 // Retry mode
 let retryList=[],retryPos=0;
@@ -2962,6 +3039,42 @@ function closeProfOv(e){if(e.target===document.getElementById('prof-ov'))closePr
 // ════════════════════════════════════════════════
 // UTILS
 // ════════════════════════════════════════════════
+
+// ── FOCUS MODE ──
+function toggleFocusMode(){
+  const on=document.body.classList.toggle('focus-mode');
+  localStorage.setItem('focus_mode',on?'1':'0');
+  const btn=document.getElementById('focus-btn');
+  if(btn){btn.textContent=on?'✨ Focus Off':'🎯 Focus';btn.classList.toggle('bo',on);}
+  toast(on?'🎯 Focus Mode ON — animations hidden':'✨ Focus Mode OFF');
+}
+
+// ── MOBILE SIDEBAR ──
+function toggleMobSidebar(){
+  const sb=document.getElementById('sb');
+  const ov=document.getElementById('sb-overlay');
+  const open=sb.classList.toggle('mob-open');
+  if(ov)ov.classList.toggle('on',open);
+}
+
+// ── CUSTOM CONFIRM MODAL ──
+let _confirmCallback=null;
+function showConfirm(msg,onOk,okLabel='Delete',danger=true){
+  document.getElementById('confirm-msg').textContent=msg;
+  const btn=document.getElementById('confirm-ok-btn');
+  btn.textContent=okLabel;
+  btn.className='btn sm '+(danger?'br_':'bo');
+  _confirmCallback=onOk;
+  document.getElementById('confirm-modal').classList.add('on');
+}
+function _confirmOk(){
+  document.getElementById('confirm-modal').classList.remove('on');
+  if(_confirmCallback){_confirmCallback();_confirmCallback=null;}
+}
+function _confirmCancel(){
+  document.getElementById('confirm-modal').classList.remove('on');
+  _confirmCallback=null;
+}
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=~~(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 function fdate(d){return`${d.getDate()}/${d.getMonth()+1}`}
 let _tt;
@@ -2988,26 +3101,6 @@ function toggleSidebar(){
 }
 
 // BG particles
-function toggleMobileSidebar(){
-  const sb=document.getElementById('sb');
-  if(sb)sb.classList.toggle('open');
-}
-function showConfirm(message,onConfirm){
-  const existing=document.getElementById('custom-confirm');
-  if(existing)existing.remove();
-  const overlay=document.createElement('div');
-  overlay.className='confirm-overlay';overlay.id='custom-confirm';
-  overlay.innerHTML=`<div class="confirm-box"><h3>⚠️ Confirm Action</h3><p>${message}</p><div class="confirm-btns"><button class="btn bg_" onclick="document.getElementById('custom-confirm').remove()">Cancel</button><button class="btn bo" style="background:var(--rg);border-color:var(--rd2);color:var(--rd2)" id="confirm-ok-btn">Delete</button></div></div>`;
-  document.body.appendChild(overlay);
-  document.getElementById('confirm-ok-btn').onclick=()=>{overlay.remove();onConfirm();};
-}
-function toggleFocusMode(){
-  const on=document.body.classList.toggle('focus-mode');
-  localStorage.setItem('focus_mode',on?'1':'0');
-  const btn=document.getElementById('mt-focus');
-  if(btn)btn.classList.toggle('on',on);
-  toast(on?'🎯 Focus Mode ON — animations hidden':'✨ Focus Mode OFF',1800);
-}
 function initBG(){
   const bg=document.getElementById('bgc');
   if(!bg) return;
