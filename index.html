@@ -60,6 +60,9 @@ input,textarea,select { font-family:var(--sans) }
 @keyframes srot { to{transform:rotate(360deg)} }
 .emb { position:absolute; width:2px; height:2px; border-radius:50%; background:var(--or); animation:embf linear infinite; opacity:0 }
 @keyframes embf { 0%{transform:translateY(0) translateX(0);opacity:0} 18%{opacity:.4} 100%{transform:translateY(-100px) translateX(var(--dx));opacity:0} }
+@media (prefers-reduced-motion: reduce) { .kp,.fbal,.seal-bg,.emb{animation:none!important;opacity:0!important} }
+body.focus-mode .kp,body.focus-mode .fbal,body.focus-mode .seal-bg,body.focus-mode .emb{opacity:0!important;animation:none!important}
+#mt-focus.on{background:var(--og);color:var(--or);border-color:var(--or)}
 
 /* ── LAYOUT ── */
 #app { display:grid; grid-template-columns:252px 1fr; min-height:100vh; position:relative; z-index:1 }
@@ -606,8 +609,28 @@ input,textarea,select { font-family:var(--sans) }
 #app.sb-col .sb-div { margin: 4px 4px; }
 #app.sb-col .sb-nav { padding: 4px 0; }
 
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 768px) {
+  #app { grid-template-columns: 1fr !important; }
+  #sb { position:fixed; left:-260px; top:0; height:100vh; z-index:200; transition:left .3s ease; width:252px !important; }
+  #sb.open { left:0; }
+  .sb-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:199; }
+  #sb.open ~ .sb-overlay { display:block; }
+  .mobile-menu-btn { display:flex !important; }
+  .scene { height:260px !important; }
+  .qopts { grid-template-columns:1fr !important; }
+  .srs-row { flex-wrap:wrap; }
+  .fg { grid-template-columns:1fr !important; }
+}
+.mobile-menu-btn { display:none; position:fixed; top:12px; left:12px; z-index:198; background:var(--s2); border:1px solid var(--b2); border-radius:8px; padding:8px 10px; font-size:16px; cursor:pointer; color:var(--t1); }
 
-/* ── FIREBASE LOGIN SCREEN ── */
+/* ── CUSTOM CONFIRM MODAL ── */
+.confirm-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+.confirm-box { background:var(--s2); border:1px solid var(--b2); border-radius:var(--rl); padding:28px 32px; max-width:380px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.6); }
+.confirm-box h3 { font-size:16px; font-weight:700; color:var(--t1); margin-bottom:10px; }
+.confirm-box p { font-size:14px; color:var(--t2); margin-bottom:22px; line-height:1.5; }
+.confirm-btns { display:flex; gap:10px; justify-content:flex-end; }
+
 #login-screen {
   position: fixed; inset: 0;
   background: var(--bg);
@@ -1032,7 +1055,8 @@ html { scroll-padding-top: 80px; }
 </div>
 
 <div id="app" style="display:none">
-
+<button class="mobile-menu-btn" onclick="toggleMobileSidebar()" id="mobile-menu-btn">☰</button>
+<div class="sb-overlay" id="sb-overlay" onclick="toggleMobileSidebar()"></div>
 <aside id="sb">
   <div class="sb-head">
     <div class="sb-logo-row">
@@ -1118,6 +1142,7 @@ html { scroll-padding-top: 80px; }
     </div>
 
     <div class="sh"><h2>📜 My Readings by Subject</h2></div>
+    <div id="weak-subj-widget"></div>
     <div class="fg" id="dash-fg">
       <div class="empty" style="grid-column:1/-1"><div class="ei">📜</div><h3>No scrolls yet</h3><p>Create a scroll or get started with the form above!</p></div>
     </div>
@@ -1225,6 +1250,7 @@ html { scroll-padding-top: 80px; }
         <div class="mt on" id="mt-flash" onclick="switchMode('flash')">🃏 Flash</div>
         <div class="mt" id="mt-quiz" onclick="switchMode('quiz')">📝 Quiz</div>
         <div class="mt" id="mt-srs" onclick="switchMode('srs')">🌀 SRS</div>
+        <div class="mt" id="mt-focus" onclick="toggleFocusMode()" title="Toggle Focus Mode">🎯</div>
       </div>
     </div>
     <div class="sbody" id="sbody">
@@ -1591,7 +1617,7 @@ function signOut(){
 function initApp(){
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app').style.display='grid';
-  initBG();updateSidebar();renderDash();renderHeatmap();
+  initBG();if(localStorage.getItem('focus_mode')==='1'){document.body.classList.add('focus-mode');}updateSidebar();renderDash();renderHeatmap();
   if(localStorage.getItem('sb_collapsed')==='1'){
     document.getElementById('app').classList.add('sb-col');
     const b=document.getElementById('sb-toggle');
@@ -1719,12 +1745,12 @@ function smNext(r,c){
   else if(r===1){iv=Math.max(1,Math.round(iv*1.2));ea=Math.max(1.3,ea-.15)}
   else if(r===2){iv=st<2?(st===0?1:3):Math.round(iv*ea);st=Math.min(st+1,2)}
   else{iv=st<2?4:Math.round(iv*ea*1.3);ea+=.1;st=2}
-  return{interval:iv,ease:+ea.toFixed(2),step:st,due:Date.now()+iv*864e5,lastRating:r}
+  return{interval:iv,ease:+ea.toFixed(2),step:st,due:Date.now()+iv*864e5,lastRating:r,reviewCount:(c.reviewCount||0)+1}
 }
 const isDue=c=>!c.due||c.due<=Date.now();
 const allTerms=()=>D.scrolls.flatMap(s=>s.terms||[]);
 const dueTerms=(si=null)=>(si!=null?(D.scrolls[si]?.terms||[]):allTerms()).filter(isDue);
-const masterTerms=()=>allTerms().filter(t=>(t.interval||0)>=21&&(t.lastRating||0)>=2);
+const masterTerms=()=>allTerms().filter(t=>(t.interval||0)>=21&&(t.lastRating||0)>=2&&(t.reviewCount||0)>=4&&(t.ease||2.5)>=2.2);
 const unsolvedGJ=()=>(D.genjutsu||[]).filter(q=>!q.solved);
 
 function addXP(n){
@@ -1781,6 +1807,8 @@ function resizeAndUploadImage(file, maxSize, callback) {
 let curPage='dashPg',CD=-1,studyFI=-1,studyMode='srs';
 
 function nav(pgId,el){
+  // Close mobile sidebar if open
+  const sb=document.getElementById('sb');if(sb)sb.classList.remove('open');
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
   document.getElementById(pgId).classList.add('on');
   curPage=pgId;
@@ -1974,8 +2002,29 @@ function renderProgressDots(){
   dotsEl.innerHTML=html;
 }
 
+function getWeakSubjects(){
+  const stats={};
+  (D.genjutsu||[]).forEach(q=>{
+    const sub=q.subjectName||q.subject||'Other';
+    if(!stats[sub])stats[sub]={total:0,unsolved:0};
+    stats[sub].total++;
+    if(!q.solved)stats[sub].unsolved++;
+  });
+  return Object.entries(stats).map(([name,s])=>({name,weakScore:s.total>0?Math.round(s.unsolved/s.total*100):0,unsolved:s.unsolved,total:s.total})).sort((a,b)=>b.weakScore-a.weakScore).slice(0,3);
+}
+function renderWeakSubjects(){
+  const w=document.getElementById('weak-subj-widget');
+  if(!w)return;
+  const ws=getWeakSubjects();
+  if(!ws.length){w.innerHTML='';return;}
+  const bars=ws.map(s=>{
+    const col=s.weakScore>=70?'var(--rd2)':s.weakScore>=40?'var(--yw2)':'var(--or2)';
+    return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:13px;font-weight:600;color:var(--t1)">${s.name}</span><span style="font-size:12px;color:${col};font-weight:700">${s.weakScore}% wrong (${s.unsolved}/${s.total})</span></div><div style="height:6px;background:var(--b1);border-radius:3px;overflow:hidden"><div style="height:100%;width:${s.weakScore}%;background:${col};border-radius:3px;transition:width .4s"></div></div></div>`;
+  }).join('');
+  w.innerHTML=`<div style="background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:16px 20px;margin-bottom:18px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="font-size:16px">🎯</span><h3 style="font-size:14px;font-weight:700;color:var(--t1);margin:0">Top Weak Subjects</h3><span style="font-size:11px;color:var(--t3);margin-left:auto">Based on Genjutsu data</span></div>${bars}</div>`;
+}
 function renderDash(){
-  updateStats();renderChakraBar();renderHeatmap();renderWarnings();
+  updateStats();renderChakraBar();renderHeatmap();renderWarnings();renderWeakSubjects();
   const c=document.getElementById('dash-fg');
   const grouped = getGroupedScrolls();
   
@@ -2112,10 +2161,11 @@ function createScroll(){
 }
 
 function delScroll(i){
-  if(!confirm(`Delete scroll "${D.scrolls[i].name}"? This cannot be undone.`))return;
-  D.scrolls.splice(i,1);saveD();CD=-1;
-  document.getElementById('sc-detail').style.display='none';
-  nav('scrollsPg',document.querySelectorAll('.nv')[1]);toast('🗑 Scroll deleted');
+  showConfirm(`Delete scroll "<strong>${D.scrolls[i].name}</strong>"? This cannot be undone.`,()=>{
+    D.scrolls.splice(i,1);saveD();CD=-1;
+    document.getElementById('sc-detail').style.display='none';
+    nav('scrollsPg',document.querySelectorAll('.nv')[1]);toast('🗑 Scroll deleted');
+  });
 }
 
 function renderScrolls(){
@@ -2332,16 +2382,29 @@ function study(fi,mode){
   else{deck=ts.map((t,i)=>({...t,_oi:i}))}
   if(!deck.length){toast('⚠️ This scroll is empty!');openScroll(fi);return}
   const maxSess=D.profile?.maxSession||20;
-  if(mode==='srs'&&deck.length>maxSess){deck=shuffle(deck).slice(0,maxSess);toast(`📚 Showing ${maxSess} cards (max session). ${ts.filter(isDue).length-maxSess} more due.`,3000)}
+  if(mode==='srs'&&deck.length>maxSess){deck.sort((a,b)=>(a.due||0)-(b.due||0));deck=shuffle(deck.slice(0,maxSess));toast(`📚 Showing ${maxSess} cards (overdue-first). ${ts.filter(isDue).length-maxSess} more due.`,3000)}
   deck=shuffle(deck);pos=0;flipped=false;
   qDeck=shuffle([...deck]);qPos=0;
   switchMode(mode);
 }
 function launchSRS(){
   if(!D.scrolls.length){toast('⚠️ No scrolls yet! Create one or load demo.');return}
+  const allDue=D.scrolls.flatMap((s,si)=>(s.terms||[]).filter(isDue).map((t,oi)=>({...t,_si:si,_oi:(s.terms||[]).indexOf(t)})));
+  if(!allDue.length){toast('✅ No cards due today! Come back tomorrow.');return}
+  // Sort most overdue first, then shuffle within the session cap
+  allDue.sort((a,b)=>(a.due||0)-(b.due||0));
+  const maxSess=D.profile?.maxSession||20;
   const best=D.scrolls.map((s,i)=>({i,due:(s.terms||[]).filter(isDue).length})).sort((a,b)=>b.due-a.due)[0];
-  if(!best.due){toast('✅ No cards due today! Come back tomorrow.');return}
-  study(best.i,'srs');
+  studyFI=best.i;studyMode='srs';sStats={a:0,h:0,g:0,e:0};
+  const s=D.scrolls[best.i];
+  document.getElementById('st-lbl').innerHTML=`<span style="width:16px;height:16px;display:inline-block">${renderIcon(s.icon)}</span> All Due Cards`;
+  nav('studyPg',null);
+  document.getElementById('tb-t').innerHTML=`⚔️ <span class="ac">Global SRS</span>`;
+  deck=shuffle(allDue.slice(0,maxSess));
+  if(allDue.length>maxSess)toast(`📚 ${maxSess} of ${allDue.length} due cards (overdue-first across all scrolls)`,3000);
+  pos=0;flipped=false;
+  qDeck=shuffle([...deck]);qPos=0;
+  switchMode('srs');
 }
 function switchMode(m){
   studyMode=m;
@@ -2421,8 +2484,10 @@ function renderQuizQ(){
   const q=qDeck[qPos];
   document.getElementById('qq-t').textContent=q.term;
   const all=D.scrolls[studyFI]?.terms||[];
-  const others=all.filter(t=>t.term!==q.term).sort(()=>Math.random()-.5).slice(0,3);
-  const opts=shuffle([...others,{term:q.term,def:q.def}]);
+  const sameSubject=D.scrolls.filter(s=>s.subject===D.scrolls[studyFI]?.subject).flatMap(s=>s.terms||[]).filter(t=>t.term!==q.term);
+  let distractors=sameSubject.sort(()=>Math.random()-.5).slice(0,3);
+  if(distractors.length<3){const extras=all.filter(t=>t.term!==q.term&&!distractors.find(d=>d.term===t.term)).sort(()=>Math.random()-.5).slice(0,3-distractors.length);distractors=[...distractors,...extras];}
+  const opts=shuffle([...distractors,{term:q.term,def:q.def}]);
   const pct=qDeck.length>1?Math.round(qPos/(qDeck.length-1)*100):100;
   document.getElementById('sp-pos').textContent=`${qPos+1} / ${qDeck.length}`;document.getElementById('sp-pct').textContent=pct+'%';document.getElementById('sp-bar').style.width=pct+'%';
   const c=document.getElementById('qq-opts');c.innerHTML='';
@@ -2633,7 +2698,7 @@ function markGJSolved(i){
   D.genjutsu[i].solved=true;D.genjutsu[i].solvedAt=Date.now();
   logToday('gjFixed');saveD();renderGJList();updateStats();addXP(5);toast('✅ Genjutsu broken! +5 XP');
 }
-function delGJ(i){if(!confirm('Delete this question?'))return;D.genjutsu.splice(i,1);saveD();renderGJList();updateStats();toast('🗑 Deleted')}
+function delGJ(i){showConfirm('Delete this question?',()=>{D.genjutsu.splice(i,1);saveD();renderGJList();updateStats();toast('🗑 Deleted');})}
 
 // Retry mode
 let retryList=[],retryPos=0;
@@ -2923,6 +2988,26 @@ function toggleSidebar(){
 }
 
 // BG particles
+function toggleMobileSidebar(){
+  const sb=document.getElementById('sb');
+  if(sb)sb.classList.toggle('open');
+}
+function showConfirm(message,onConfirm){
+  const existing=document.getElementById('custom-confirm');
+  if(existing)existing.remove();
+  const overlay=document.createElement('div');
+  overlay.className='confirm-overlay';overlay.id='custom-confirm';
+  overlay.innerHTML=`<div class="confirm-box"><h3>⚠️ Confirm Action</h3><p>${message}</p><div class="confirm-btns"><button class="btn bg_" onclick="document.getElementById('custom-confirm').remove()">Cancel</button><button class="btn bo" style="background:var(--rg);border-color:var(--rd2);color:var(--rd2)" id="confirm-ok-btn">Delete</button></div></div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('confirm-ok-btn').onclick=()=>{overlay.remove();onConfirm();};
+}
+function toggleFocusMode(){
+  const on=document.body.classList.toggle('focus-mode');
+  localStorage.setItem('focus_mode',on?'1':'0');
+  const btn=document.getElementById('mt-focus');
+  if(btn)btn.classList.toggle('on',on);
+  toast(on?'🎯 Focus Mode ON — animations hidden':'✨ Focus Mode OFF',1800);
+}
 function initBG(){
   const bg=document.getElementById('bgc');
   if(!bg) return;
