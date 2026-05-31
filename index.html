@@ -1186,6 +1186,7 @@ html { scroll-padding-top: 80px; }
           <div style="font-size:12px;color:var(--t2);margin-top:3px" id="scd-mt">0 terms</div>
         </div>
         <div style="margin-left:auto;display:flex;gap:7px">
+          <button class="btn bg_ sm" onclick="openEditScroll(CD)">✏️ Edit</button>
           <button class="btn bo sm" onclick="study(CD,'srs')">🌀 SRS Train</button>
           <button class="btn bg_ sm" onclick="study(CD,'flash')">🃏 Flashcard</button>
           <button class="btn bg_ sm" onclick="study(CD,'quiz')">📝 Quiz</button>
@@ -1295,7 +1296,7 @@ html { scroll-padding-top: 80px; }
           <button class="btn bo sm" onclick="toggleGJForm()">＋ Add Wrong Answer</button>
         </div>
       </div>
-      <div class="expnd" id="gj-exp">
+      <div class="expnd" id="gj-form-exp">
         <div class="expnd-in">
           <div style="font-family:var(--serif);font-size:14px;font-weight:700;color:var(--or);margin-bottom:13px">✦ Log a Wrong Answer from CFA Practice</div>
           <div class="fgrp"><label class="flbl">Question</label>
@@ -1322,7 +1323,7 @@ html { scroll-padding-top: 80px; }
               <select class="fs" id="gj-topic"><option value="">— Select a Reading —</option></select></div>
           </div>
           <div class="fgrp"><label class="flbl">Explanation (highly recommended — paste from CFA platform)</label>
-            <textarea class="ft" id="gj-exp" placeholder="Why is this answer correct? Paste the explanation here... Formatting preserved." style="min-height:90px;line-height:1.55;white-space:pre-wrap"></textarea></div>
+            <textarea class="ft" id="gj-explain" placeholder="Why is this answer correct? Paste the explanation here... Formatting preserved." style="min-height:90px;line-height:1.55;white-space:pre-wrap"></textarea></div>
           <div style="display:flex;gap:8px;justify-content:flex-end">
             <button class="btn bg_ sm" onclick="toggleGJForm()">Cancel</button>
             <button class="btn bo sm" onclick="saveGJ()">💾 Save</button>
@@ -1449,6 +1450,56 @@ html { scroll-padding-top: 80px; }
     <div class="modal-ft">
       <button class="btn bg_ sm" onclick="closeProfile()">Close</button>
       <button class="btn bo sm" onclick="saveProfile()">💾 Save Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EDIT TERM MODAL ══ -->
+<div class="ov" id="edit-term-ov" onclick="closeEditTermOv(event)">
+  <div class="modal" style="width:520px">
+    <div class="modal-hd">✏️ Edit Flashcard</div>
+    <div class="fgrp"><label class="flbl">Term</label><input type="text" class="fi" id="et-term" placeholder="Term / keyword"></div>
+    <div class="fgrp"><label class="flbl">Definition</label><textarea class="ft" id="et-def" placeholder="Definition..." style="min-height:100px"></textarea></div>
+    <div class="modal-ft">
+      <button class="btn bg_ sm" onclick="closeEditTerm()">Cancel</button>
+      <button class="btn bo sm" onclick="saveEditTerm()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EDIT SCROLL MODAL ══ -->
+<div class="ov" id="edit-scroll-ov" onclick="closeEditScrollOv(event)">
+  <div class="modal" style="width:560px">
+    <div class="modal-hd">✏️ Edit Scroll</div>
+    <div class="frow">
+      <div class="fgrp" style="flex:2"><label class="flbl">Scroll Name</label><input type="text" class="fi" id="es-nm" placeholder="Scroll name"></div>
+      <div class="fgrp" style="flex:1"><label class="flbl">CFA Subject</label>
+        <select class="fs" id="es-subj">
+          <option value="ethics">Ethics & Professional Standards</option>
+          <option value="quant">Quantitative Methods</option>
+          <option value="econ">Economics</option>
+          <option value="fra">Financial Reporting & Analysis</option>
+          <option value="corp">Corporate Issuers</option>
+          <option value="equity">Equity Investments</option>
+          <option value="fixed">Fixed Income</option>
+          <option value="deriv">Derivatives</option>
+          <option value="alt">Alternative Investments</option>
+          <option value="pm">Portfolio Management</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fgrp" style="flex:2"><label class="flbl">Icon (Click to select or Upload Custom)</label>
+        <div class="icp" id="icp-edit"></div>
+      </div>
+      <div class="fgrp" style="flex:1"><label class="flbl">Description (optional)</label><input type="text" class="fi" id="es-ds" placeholder="Description..."></div>
+      <div class="fgrp" style="min-width:100px"><label class="flbl">Mission Rank</label>
+        <select class="fs" id="es-rank"><option value="S">🔴 S-Rank</option><option value="A">🟠 A-Rank</option><option value="B">🟡 B-Rank</option><option value="C">🟢 C-Rank</option></select>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn bg_ sm" onclick="closeEditScroll()">Cancel</button>
+      <button class="btn bo sm" onclick="saveEditScroll()">💾 Save Changes</button>
     </div>
   </div>
 </div>
@@ -2113,7 +2164,7 @@ function renderScrollDetail(i){
   document.getElementById('scd-mt').textContent=`${ts.length} terms · ${due} due · ${mst} mastered`;
   const si=t=>{if(!t.due)return'<span class="pill p-bl">New</span>';if(isDue(t))return'<span class="pill p-or">Due</span>';if((t.interval||0)>=21)return'<span class="pill p-gn">Master</span>';return'<span class="pill p-yw">Learning</span>'};
   document.getElementById('scd-rows').innerHTML=ts.length
-    ?ts.map((t,ti)=>`<div class="tt-r tt-3"><div class="ttc">${t.term}</div><div class="ttc">${renderMD(t.def)}</div><div class="ttc">${si(t)}<button class="btn br_ xs bic" onclick="delTerm(${i},${ti});event.stopPropagation()" title="Delete">✕</button></div></div>`).join('')
+    ?ts.map((t,ti)=>`<div class="tt-r tt-3"><div class="ttc">${t.term}</div><div class="ttc">${renderMD(t.def)}</div><div class="ttc" style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">${si(t)}<button class="btn bg_ xs bic" onclick="openEditTerm(${i},${ti});event.stopPropagation()" title="Edit">✏️</button><button class="btn br_ xs bic" onclick="delTerm(${i},${ti});event.stopPropagation()" title="Delete">✕</button></div></div>`).join('')
     :'<div class="empty" style="padding:22px"><div class="ei" style="font-size:34px">🈳</div><h3>No terms yet</h3></div>';
   document.getElementById('sc-detail').style.display='block';
   document.getElementById('sc-detail').scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -2129,6 +2180,85 @@ function addTerm(){
   document.getElementById('nt-t').focus();
 }
 function delTerm(si,ti){D.scrolls[si].terms.splice(ti,1);saveD();renderScrollDetail(si);updateSidebar()}
+
+// ── EDIT TERM ──
+let _editTermSI=-1, _editTermTI=-1;
+function openEditTerm(si, ti){
+  _editTermSI=si; _editTermTI=ti;
+  const t=D.scrolls[si].terms[ti];
+  document.getElementById('et-term').value=t.term||'';
+  document.getElementById('et-def').value=t.def||'';
+  document.getElementById('edit-term-ov').classList.add('on');
+  setTimeout(()=>document.getElementById('et-term').focus(),80);
+}
+function closeEditTerm(){document.getElementById('edit-term-ov').classList.remove('on')}
+function closeEditTermOv(e){if(e.target===document.getElementById('edit-term-ov'))closeEditTerm()}
+function saveEditTerm(){
+  const term=document.getElementById('et-term').value.trim();
+  const def=document.getElementById('et-def').value.trim();
+  if(!term||!def){toast('⚠️ Fill in both term and definition!');return}
+  D.scrolls[_editTermSI].terms[_editTermTI].term=term;
+  D.scrolls[_editTermSI].terms[_editTermTI].def=def;
+  saveD();closeEditTerm();renderScrollDetail(_editTermSI);updateSidebar();toast('✅ Term updated!');
+}
+
+// ── EDIT SCROLL ──
+let selIcoEdit='🌀';
+function renderIconPickerEdit(){
+  const icp=document.getElementById('icp-edit');
+  if(!icp) return;
+  const allIcons=[...SCROLL_THEME_ICONS,...(D.customIcons||[])];
+  icp.innerHTML=allIcons.map(ico=>{
+    const isUrl=ico.startsWith('http')||ico.startsWith('data:');
+    const content=isUrl?`<img src="${ico}" style="width:100%;height:100%;object-fit:contain;">`:`<span style="font-size:20px;line-height:1">${ico}</span>`;
+    const key=encodeURIComponent(ico);
+    return`<div class="ico ${ico===selIcoEdit?'on':''}" onclick="pickIconEdit('${key}',this)" data-ico="${key}">${content}</div>`;
+  }).join('')+`
+    <div class="ico upload-btn-wrap" style="background:var(--s3);border:1px dashed var(--or2);">
+      <span style="font-size:20px;color:var(--or2)">+</span>
+      <input type="file" accept="image/*" onchange="uploadScrollIconEdit(this)">
+    </div>`;
+}
+function pickIconEdit(key,el){
+  selIcoEdit=decodeURIComponent(key);
+  document.querySelectorAll('#icp-edit .ico').forEach(o=>o.classList.remove('on'));
+  el.classList.add('on');
+}
+function uploadScrollIconEdit(input){
+  const f=input.files[0];if(!f)return;
+  resizeAndUploadImage(f,64,(base64)=>{
+    D.customIcons=D.customIcons||[];
+    D.customIcons.push(base64);
+    saveD();
+    selIcoEdit=base64;
+    renderIconPickerEdit();
+    toast('✅ Icon uploaded!');
+  });
+}
+function openEditScroll(idx){
+  if(idx<0||!D.scrolls[idx])return;
+  const s=D.scrolls[idx];
+  selIcoEdit=s.icon||'🌀';
+  document.getElementById('es-nm').value=s.name||'';
+  document.getElementById('es-subj').value=s.subject||'ethics';
+  document.getElementById('es-rank').value=s.rank||'B';
+  document.getElementById('es-ds').value=s.desc||'';
+  document.getElementById('edit-scroll-ov').classList.add('on');
+  renderIconPickerEdit();
+}
+function closeEditScroll(){document.getElementById('edit-scroll-ov').classList.remove('on')}
+function closeEditScrollOv(e){if(e.target===document.getElementById('edit-scroll-ov'))closeEditScroll()}
+function saveEditScroll(){
+  const nm=document.getElementById('es-nm').value.trim();
+  if(!nm){toast('⚠️ Enter scroll name!');return}
+  const s=D.scrolls[CD];
+  s.name=nm;
+  s.icon=selIcoEdit;
+  s.subject=document.getElementById('es-subj').value;
+  s.rank=document.getElementById('es-rank').value;
+  s.desc=document.getElementById('es-ds').value.trim();
+  saveD();closeEditScroll();renderScrolls();renderScrollDetail(CD);updateSidebar();toast('✅ Scroll updated!');
+}
 
 // ════════════════════════════════════════════════
 // CSV IMPORT
@@ -2311,7 +2441,7 @@ function nextQuiz(){qPos++;renderQuizQ()}
 // ════════════════════════════════════════════════
 let correctIdx=-1,yoursIdx=-1,gjFilter='all';
 function toggleGJForm(){
-  const exp=document.getElementById('gj-exp');
+  const exp=document.getElementById('gj-form-exp');
   exp.classList.toggle('on');
   if(exp.classList.contains('on')){
     resetGJForm();         // always clear form when opening fresh
@@ -2338,7 +2468,7 @@ function populateGJTopicSel(){
   sel.innerHTML = opts;
 }
 function resetGJForm(){
-  ['gj-q','gj-topic','gj-exp'].forEach(id=>document.getElementById(id).value='');
+  ['gj-q','gj-topic','gj-explain'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.querySelectorAll('#choices .choice-lbl').forEach(l=>l.classList.remove('sel'));
   document.querySelectorAll('#ya-btns .btn').forEach(b=>b.classList.remove('bo'));
   document.querySelectorAll('#choices input').forEach(i=>i.value='');
@@ -2358,7 +2488,7 @@ function saveGJ(){
   const linkedScroll = D.scrolls.find(s => s.name === topicVal);
   const subjectKey  = linkedScroll ? (linkedScroll.subject || '') : '';
   const subjectName = linkedScroll ? (SUBJECT_NAMES[subjectKey] || subjectKey) : '';
-  D.genjutsu.push({id:Date.now(),question:q,opts:inputs.map((v,i)=>({label:LBLS[i],text:v})).filter(o=>o.text),correctIdx,yoursIdx,topic:topicVal,subject:subjectKey,subjectName,explain:document.getElementById('gj-exp').value.trim(),solved:false,attempts:0,createdAt:Date.now()});
+  D.genjutsu.push({id:Date.now(),question:q,opts:inputs.map((v,i)=>({label:LBLS[i],text:v})).filter(o=>o.text),correctIdx,yoursIdx,topic:topicVal,subject:subjectKey,subjectName,explain:document.getElementById('gj-explain').value.trim(),solved:false,attempts:0,createdAt:Date.now()});
   saveD();toggleGJForm();renderGJList();updateStats();toast('💾 Saved!');
 }
 function setGJF(f,el){gjFilter=f;document.querySelectorAll('.fb[data-f]').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderGJList()}
