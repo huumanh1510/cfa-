@@ -446,6 +446,7 @@ input,textarea,select { font-family:var(--sans) }
 .b-or{background:linear-gradient(180deg,var(--or2),var(--od))} .b-gn{background:linear-gradient(180deg,var(--gn2),#14532d)} .b-rd{background:linear-gradient(180deg,var(--rd2),var(--rd))} .b-yw{background:linear-gradient(180deg,var(--yw2),var(--yw))}
 .donut-wrap { display:flex; align-items:center; gap:18px }
 #ch-donut { width:100%; }
+#donut-svg path { transition: opacity .18s, transform .18s; transform-box: fill-box; transform-origin: center; }
 .donut-legend { display:flex; flex-direction:column; gap:7px }
 .dl-item { display:flex; align-items:center; gap:7px; font-size:14px; color:var(--t2) }
 .dl-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0 }
@@ -945,8 +946,7 @@ input,textarea,select { font-family:var(--sans) }
 .sb-logo-ic:hover { transform: rotate(-8deg) scale(1.06); }
 
 /* Donut chart hover */
-.donut-wrap svg path { transition: opacity .2s; cursor: default; }
-.donut-wrap svg path:hover { opacity: 1 !important; }
+/* donut hover handled via JS */
 
 /* Smooth scroll-into-view feels */
 html { scroll-padding-top: 80px; }
@@ -1411,13 +1411,11 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
       <div class="cc"><div class="cc-t">📅 Cards Reviewed Per Day</div><div class="bar-chart" id="ch-daily"></div></div>
       <div class="cc"><div class="cc-t">⚡ SRS Rating Distribution</div><div class="bar-chart" id="ch-result"></div></div>
     </div>
-    <div class="pg2">
-      <div class="cc" id="donut-card">
-        <div class="cc-t">🎯 Mastery Distribution</div>
-        <div id="ch-donut" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 0 8px"></div>
-      </div>
-      <div class="cc"><div class="cc-t">👁️‍🗨️ Top Genjutsu — Most Missed</div><div id="ch-gj-top"></div></div>
+    <div class="cc" id="donut-card" style="margin-bottom:14px">
+      <div class="cc-t">🎯 Mastery Distribution</div>
+      <div id="ch-donut" style="width:100%;padding:16px 0 8px"></div>
     </div>
+    <div class="cc" style="margin-bottom:14px"><div class="cc-t">👁️‍🗨️ Top Genjutsu — Most Missed</div><div id="ch-gj-top"></div></div>
     <div class="cc" style="margin-bottom:18px">
       <div class="cc-t">📈 Genjutsu Trend <span style="color:var(--gn2);font-size:11px">— green = broken</span></div>
       <div class="bar-chart" id="ch-gj-trend"></div>
@@ -2946,91 +2944,84 @@ function renderDonut(all){
   const nw=all.filter(t=>!t.due).length;
   const total=all.length||1;
   const seg=[
-    {v:mst,c:'#22c55e',l:'Mastered',key:'mst'},
-    {v:lrn,c:'#eab308',l:'Learning',key:'lrn'},
-    {v:rev,c:'#f97316',l:'Review',  key:'rev'},
-    {v:nw, c:'#3b82f6',l:'New',     key:'nw'}
+    {v:mst,c:'#22c55e',l:'Mastered'},
+    {v:lrn,c:'#eab308',l:'Learning'},
+    {v:rev,c:'#f97316',l:'Review'},
+    {v:nw, c:'#3b82f6',l:'New'}
   ];
 
-  // Build SVG paths
-  const S=200, R=88, r=54, cx=S/2, cy=S/2;
-  let angle=-Math.PI/2, paths='', hoverPaths='';
+  const S=220, R=96, ri=60, cx=S/2, cy=S/2;
+  let angle=-Math.PI/2;
+  const paths=[];
   seg.forEach((s,i)=>{
     const sw=(s.v/total)*2*Math.PI;
-    if(sw<0.005)return;
+    if(sw<0.005){paths.push(null);angle+=sw;return;}
     const x1=cx+R*Math.cos(angle),       y1=cy+R*Math.sin(angle);
     const x2=cx+R*Math.cos(angle+sw),    y2=cy+R*Math.sin(angle+sw);
-    const x3=cx+r*Math.cos(angle+sw),    y3=cy+r*Math.sin(angle+sw);
-    const x4=cx+r*Math.cos(angle),       y4=cy+r*Math.sin(angle);
+    const x3=cx+ri*Math.cos(angle+sw),   y3=cy+ri*Math.sin(angle+sw);
+    const x4=cx+ri*Math.cos(angle),      y4=cy+ri*Math.sin(angle);
     const la=sw>Math.PI?1:0;
-    const pct=Math.round(s.v/total*100);
-    const d=`M${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${la},1 ${x2.toFixed(1)},${y2.toFixed(1)} L${x3.toFixed(1)},${y3.toFixed(1)} A${r},${r} 0 ${la},0 ${x4.toFixed(1)},${y4.toFixed(1)} Z`;
-    paths+=`<path d="${d}" fill="${s.c}" opacity=".88" stroke="var(--bg)" stroke-width="2"
-      data-label="${s.l}" data-val="${s.v}" data-pct="${pct}"
-      style="cursor:pointer;transition:opacity .15s,transform .15s;transform-origin:${cx}px ${cy}px"
-      onmouseenter="donutHover(this,'${s.l}',${s.v},${pct},'${s.c}')"
-      onmouseleave="donutLeave(this)"/>`;
+    const d=`M${x1.toFixed(2)},${y1.toFixed(2)} A${R},${R} 0 ${la},1 ${x2.toFixed(2)},${y2.toFixed(2)} `+
+            `L${x3.toFixed(2)},${y3.toFixed(2)} A${ri},${ri} 0 ${la},0 ${x4.toFixed(2)},${y4.toFixed(2)} Z`;
+    paths.push({d, color:s.c, label:s.l, val:s.v, pct:Math.round(s.v/total*100)});
     angle+=sw;
   });
 
-  const fs=22, fsSub=10;
-  const svgStr=`<svg id="donut-svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
-    ${paths}
-    <circle cx="${cx}" cy="${cy}" r="${r-2}" fill="var(--bg2)" opacity=".6"/>
-    <text id="donut-center-val" x="${cx}" y="${cy-4}" text-anchor="middle" fill="#ede8d8" font-size="${fs}" font-weight="700" font-family="Merriweather,serif">${total}</text>
-    <text id="donut-center-lbl" x="${cx}" y="${cy+14}" text-anchor="middle" fill="#4d5a70" font-size="${fsSub}" letter-spacing="2">TOTAL</text>
-  </svg>`;
+  const pathsHTML=paths.filter(Boolean).map(p=>
+    `<path d="${p.d}" fill="${p.color}" opacity=".88" stroke="var(--bg)" stroke-width="2.5"/>`
+  ).join('');
 
-  // Legend rows
-  const legendHtml=seg.map(s=>{
+  const legendHTML=seg.map(s=>{
     const pct=Math.round(s.v/total*100);
-    return `<div class="dl-item" style="gap:10px;padding:5px 0">
-      <div style="width:12px;height:12px;border-radius:50%;background:${s.c};flex-shrink:0"></div>
+    return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--b1)">
+      <div style="width:13px;height:13px;border-radius:50%;background:${s.c};flex-shrink:0"></div>
       <span style="flex:1;font-size:14px;color:var(--t2)">${s.l}</span>
-      <span style="font-family:var(--serif);font-size:18px;font-weight:700;color:${s.c};min-width:36px;text-align:right">${s.v}</span>
-      <span style="font-size:12px;color:var(--t3);min-width:36px;text-align:right">${pct}%</span>
+      <span style="font-family:var(--serif);font-size:20px;font-weight:700;color:${s.c};min-width:40px;text-align:right">${s.v}</span>
+      <span style="font-size:13px;color:var(--t3);min-width:40px;text-align:right">${pct}%</span>
     </div>`;
   }).join('');
 
   const wrap=document.getElementById('ch-donut');
   wrap.innerHTML=`
-    <div style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;width:100%">
-      <div style="position:relative;flex-shrink:0">${svgStr}
-        <div id="donut-tooltip" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;text-align:center"></div>
+    <div style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap">
+      <div style="position:relative;flex-shrink:0">
+        <svg id="donut-svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
+          ${pathsHTML}
+          <circle cx="${cx}" cy="${cy}" r="${ri-3}" fill="var(--bg2)"/>
+          <text id="donut-cv" x="${cx}" y="${cy-5}" text-anchor="middle"
+            fill="#ede8d8" font-size="24" font-weight="700" font-family="Merriweather,serif">${total}</text>
+          <text id="donut-cl" x="${cx}" y="${cy+15}" text-anchor="middle"
+            fill="#4d5a70" font-size="10" letter-spacing="2">TOTAL</text>
+        </svg>
       </div>
-      <div style="display:flex;flex-direction:column;gap:4px;min-width:180px">${legendHtml}</div>
+      <div style="min-width:200px;flex:1;max-width:280px">${legendHTML}</div>
     </div>`;
+
+  // Attach hover via JS addEventListener — works reliably unlike inline SVG handlers
+  const svg=wrap.querySelector('#donut-svg');
+  if(!svg) return;
+  const svgPaths=svg.querySelectorAll('path');
+  const cvEl=svg.querySelector('#donut-cv');
+  const clEl=svg.querySelector('#donut-cl');
+
+  svgPaths.forEach((el,i)=>{
+    const p=paths.filter(Boolean)[i];
+    if(!p) return;
+    el.addEventListener('mouseenter',()=>{
+      svgPaths.forEach(o=>{ o.style.opacity='0.25'; o.style.transform='scale(1)'; });
+      el.style.opacity='1';
+      el.style.transform='scale(1.06)';
+      if(cvEl){ cvEl.textContent=p.val; cvEl.setAttribute('fill',p.color); }
+      if(clEl){ clEl.textContent=p.label.toUpperCase(); clEl.setAttribute('fill',p.color); }
+    });
+    el.addEventListener('mouseleave',()=>{
+      svgPaths.forEach(o=>{ o.style.opacity='0.88'; o.style.transform='scale(1)'; });
+      if(cvEl){ cvEl.textContent=all.length||0; cvEl.setAttribute('fill','#ede8d8'); }
+      if(clEl){ clEl.textContent='TOTAL'; clEl.setAttribute('fill','#4d5a70'); }
+    });
+  });
 }
 
-function donutHover(el, label, val, pct, color){
-  // Scale up hovered segment
-  el.style.opacity='1';
-  el.style.transform='scale(1.04)';
-  // Update center text
-  const cv=document.getElementById('donut-center-val');
-  const cl=document.getElementById('donut-center-lbl');
-  if(cv){ cv.textContent=val; cv.setAttribute('fill',color); }
-  if(cl){ cl.textContent=label.toUpperCase(); cl.setAttribute('fill',color); }
-  // Dim others
-  el.closest('svg').querySelectorAll('path').forEach(p=>{
-    if(p!==el){ p.style.opacity='0.35'; p.style.transform='scale(1)'; }
-  });
-}
-function donutLeave(el){
-  const svg=el.closest('svg');
-  if(!svg)return;
-  svg.querySelectorAll('path').forEach(p=>{
-    p.style.opacity='0.88';p.style.transform='scale(1)';
-  });
-  // Restore total
-  const cv=document.getElementById('donut-center-val');
-  const cl=document.getElementById('donut-center-lbl');
-  if(cv){cv.setAttribute('fill','#ede8d8');}
-  if(cl){cl.setAttribute('fill','#4d5a70');cl.textContent='TOTAL';}
-  // Restore total count
-  const all=allTerms();
-  if(cv)cv.textContent=all.length||0;
-}
 function renderGJTop(){
   const top=unsolvedGJ().sort((a,b)=>b.attempts-a.attempts).slice(0,10);
   const c=document.getElementById('ch-gj-top');
