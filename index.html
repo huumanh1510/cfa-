@@ -1188,7 +1188,12 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
           </div>
         </div>
         <div class="frow">
-          <div class="fgrp" style="flex:2"><label class="flbl">Icon (Click to select or Upload Custom)</label>
+          <div class="fgrp" style="flex:2">
+            <label class="flbl">Icon (Click to select or Upload Custom)</label>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <div id="sel-ico-preview" style="display:none;width:44px;height:44px;background:var(--s2);border:2px solid var(--or);border-radius:8px;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0"></div>
+              <span id="sel-ico-preview-lbl" style="font-size:12px;color:var(--or);display:none">✓ Icon selected</span>
+            </div>
             <div class="icp" id="icp">
               </div>
           </div>
@@ -1527,7 +1532,12 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
       </div>
     </div>
     <div class="frow">
-      <div class="fgrp" style="flex:2"><label class="flbl">Icon (Click to select or Upload Custom)</label>
+      <div class="fgrp" style="flex:2">
+        <label class="flbl">Icon (Click to select or Upload Custom)</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div id="sel-ico-edit-preview" style="display:none;width:44px;height:44px;background:var(--s2);border:2px solid var(--or);border-radius:8px;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0"></div>
+          <span style="font-size:12px;color:var(--or);display:none" id="sel-ico-edit-lbl">✓ Icon selected</span>
+        </div>
         <div class="icp" id="icp-edit"></div>
       </div>
       <div class="fgrp" style="flex:1"><label class="flbl">Description (optional)</label><input type="text" class="fi" id="es-ds" placeholder="Description..."></div>
@@ -1622,6 +1632,12 @@ function ensureD(){
   D.profile.avatarId  =D.profile.avatarId  ||'naruto';
   D.profile.examDate  =D.profile.examDate  ||'';
   D.profile.cfaLevel  =D.profile.cfaLevel  ||1;
+  // Sanitize corrupted scroll data: if name looks like base64/data URL, reset it
+  (D.scrolls||[]).forEach(s=>{
+    if(s.name && (s.name.startsWith('data:') || s.name.startsWith('http')||s.name.length>200)){
+      s.name='Untitled Scroll';
+    }
+  });
 }
 
 // ── Auth functions ──
@@ -2145,6 +2161,16 @@ function avg7daySpeed(){
 // ════════════════════════════════════════════════
 let selIco = '🌀';
 
+function updateIconPreview(elId, iconStr){
+  const el=document.getElementById(elId);
+  if(!el)return;
+  if(!iconStr||iconStr==='🌀'){el.style.display='none';return;}
+  const isUrl=iconStr.startsWith('data:')||iconStr.startsWith('http');
+  el.style.display='flex';
+  el.innerHTML=isUrl
+    ?`<img src="${iconStr}" style="width:100%;height:100%;object-fit:contain;border-radius:6px;">`
+    :`<span style="font-size:28px;line-height:1">${iconStr}</span>`;
+}
 function renderIconPicker() {
   const icp = document.getElementById('icp');
   if(!icp) return;
@@ -2169,6 +2195,8 @@ function renderIconPicker() {
       selIco = allIcons2[idx2];
       icp.querySelectorAll('.ico').forEach(o => o.classList.remove('on'));
       el.classList.add('on');
+      updateIconPreview('sel-ico-preview', selIco);
+      const lbl=document.getElementById('sel-ico-preview-lbl');if(lbl)lbl.style.display='block';
     });
   });
 }
@@ -2189,7 +2217,8 @@ function uploadScrollIcon(input) {
     saveD();
     selIco = base64;
     renderIconPicker();
-    toast('✅ Icon uploaded!');
+    updateIconPreview('sel-ico-preview', base64);
+    toast('✅ Icon uploaded — selected!');
   });
 }
 
@@ -2331,6 +2360,7 @@ function renderIconPickerEdit(){
       selIcoEdit=allIcons2[idx2];
       icp.querySelectorAll('.ico').forEach(o=>o.classList.remove('on'));
       el.classList.add('on');
+      updateIconPreview('sel-ico-edit-preview', selIcoEdit);
     });
   });
 }
@@ -2348,7 +2378,8 @@ function uploadScrollIconEdit(input){
     saveD();
     selIcoEdit=base64;
     renderIconPickerEdit();
-    toast('✅ Icon uploaded!');
+    updateIconPreview('sel-ico-edit-preview', base64);
+    toast('✅ Icon uploaded — selected!');
   });
 }
 function openEditScroll(idx){
@@ -2361,6 +2392,9 @@ function openEditScroll(idx){
   document.getElementById('es-ds').value=s.desc||'';
   document.getElementById('edit-scroll-ov').classList.add('on');
   renderIconPickerEdit();
+  updateIconPreview('sel-ico-edit-preview', s.icon);
+  const editLbl=document.getElementById('sel-ico-edit-lbl');
+  if(editLbl) editLbl.style.display=s.icon&&s.icon!='🌀'?'block':'none';
 }
 function closeEditScroll(){document.getElementById('edit-scroll-ov').classList.remove('on')}
 function closeEditScrollOv(e){if(e.target===document.getElementById('edit-scroll-ov'))closeEditScroll()}
