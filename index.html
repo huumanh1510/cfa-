@@ -1411,7 +1411,10 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
       <div class="cc"><div class="cc-t">⚡ SRS Rating Distribution</div><div class="bar-chart" id="ch-result"></div></div>
     </div>
     <div class="pg2">
-      <div class="cc"><div class="cc-t">🎯 Mastery Distribution</div><div class="donut-wrap" id="ch-donut"></div></div>
+      <div class="cc" id="donut-card" onclick="openDonutModal()" style="cursor:pointer;transition:border-color .2s" onmouseenter="this.style.borderColor='var(--or)'" onmouseleave="this.style.borderColor=''">
+        <div class="cc-t">🎯 Mastery Distribution <span style="font-size:11px;color:var(--t3);font-weight:400;margin-left:6px">· click to expand</span></div>
+        <div class="donut-wrap" id="ch-donut" style="pointer-events:none"></div>
+      </div>
       <div class="cc"><div class="cc-t">👁️‍🗨️ Top Genjutsu — Most Missed</div><div id="ch-gj-top"></div></div>
     </div>
     <div class="cc" style="margin-bottom:18px">
@@ -1536,6 +1539,19 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
     <div class="modal-ft">
       <button class="btn bg_ sm" onclick="closeEditScroll()">Cancel</button>
       <button class="btn bo sm" onclick="saveEditScroll()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DONUT MODAL ══ -->
+<div class="ov" id="donut-modal-ov" onclick="closeDonutModal(event)" style="display:none">
+  <div class="modal" style="width:520px;max-width:95vw;padding:32px 36px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+      <div style="font-family:var(--serif);font-size:20px;font-weight:700;color:var(--t1)">🎯 Mastery Distribution</div>
+      <button class="btn bg_ sm" onclick="closeDonutModal(null)">✕</button>
+    </div>
+    <div id="donut-modal-body" style="display:flex;flex-direction:column;align-items:center;gap:28px">
+      <!-- filled by openDonutModal() -->
     </div>
   </div>
 </div>
@@ -2575,7 +2591,9 @@ function populateGJTopicSel(){
     const subName = SUBJECT_NAMES[subKey] || subKey;
     opts += `<optgroup label="${subName}">`;
     scrolls.forEach(s => {
-      opts += `<option value="${s.name}">${s.icon} ${s.name}</option>`;
+      // Only use emoji icons in option text (base64 images break select dropdowns)
+      const iconText = (s.icon && !s.icon.startsWith('data:') && !s.icon.startsWith('http')) ? s.icon + ' ' : '';
+      opts += `<option value="${s.name}">${iconText}${s.name}</option>`;
     });
     opts += '</optgroup>';
   }
@@ -2897,14 +2915,66 @@ function renderResultChart(m){
     <div class="bc-col"><div class="bc-w"><div class="bar b-or" style="height:${Math.round(m.good/mx*100)}%"></div></div><div class="bc-l">Good</div><div class="bc-v">${m.good}</div></div>
     <div class="bc-col"><div class="bc-w"><div class="bar b-gn" style="height:${Math.round(m.easy/mx*100)}%"></div></div><div class="bc-l">Easy</div><div class="bc-v">${m.easy}</div></div>`;
 }
+// Build donut SVG paths — shared by small preview and large modal
+function buildDonutSVG(seg, total, size, R, r){
+  const cx=size/2, cy=size/2;
+  let angle=-Math.PI/2, paths='';
+  seg.forEach(s=>{
+    const sw=(s.v/total)*2*Math.PI;
+    if(sw<0.01)return;
+    const x1=cx+R*Math.cos(angle),y1=cy+R*Math.sin(angle);
+    const x2=cx+R*Math.cos(angle+sw),y2=cy+R*Math.sin(angle+sw);
+    const x3=cx+r*Math.cos(angle+sw),y3=cy+r*Math.sin(angle+sw);
+    const x4=cx+r*Math.cos(angle),y4=cy+r*Math.sin(angle);
+    const la=sw>Math.PI?1:0;
+    paths+=`<path d="M${x1.toFixed(2)},${y1.toFixed(2)} A${R},${R} 0 ${la},1 ${x2.toFixed(2)},${y2.toFixed(2)} L${x3.toFixed(2)},${y3.toFixed(2)} A${r},${r} 0 ${la},0 ${x4.toFixed(2)},${y4.toFixed(2)} Z" fill="${s.c}" opacity=".88" stroke="var(--bg)" stroke-width="1.5"/>`;
+    angle+=sw;
+  });
+  const fs=Math.round(size*0.13), fsSub=Math.round(size*0.065);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${paths}<text x="${cx}" y="${cy+fs*0.35}" text-anchor="middle" fill="#ede8d8" font-size="${fs}" font-weight="700" font-family="Merriweather,serif">${total}</text><text x="${cx}" y="${cy+fs*0.35+fsSub+2}" text-anchor="middle" fill="#4d5a70" font-size="${fsSub}" letter-spacing="2">TOTAL</text></svg>`;
+}
+let _lastDonutSeg=[], _lastDonutTotal=1;
 function renderDonut(all){
-  const mst=all.filter(t=>(t.interval||0)>=21).length,lrn=all.filter(t=>t.due&&!isDue(t)&&(t.interval||0)<21).length;
-  const rev=all.filter(t=>isDue(t)&&t.due).length,nw=all.filter(t=>!t.due).length,total=all.length||1;
+  const mst=all.filter(t=>isMastered(t)).length;
+  const lrn=all.filter(t=>t.due&&!isDue(t)&&!isMastered(t)).length;
+  const rev=all.filter(t=>isDue(t)&&t.due).length;
+  const nw=all.filter(t=>!t.due).length;
+  const total=all.length||1;
   const seg=[{v:mst,c:'#22c55e',l:'Mastered'},{v:lrn,c:'#eab308',l:'Learning'},{v:rev,c:'#f97316',l:'Review'},{v:nw,c:'#3b82f6',l:'New'}];
-  const R=54,r=34,cx=64,cy=64;let angle=-Math.PI/2;let paths='';
-  seg.forEach(s=>{const pct=s.v/total,sw=pct*2*Math.PI;if(sw<0.01)return;const x1=cx+R*Math.cos(angle),y1=cy+R*Math.sin(angle),x2=cx+R*Math.cos(angle+sw),y2=cy+R*Math.sin(angle+sw),x3=cx+r*Math.cos(angle+sw),y3=cy+r*Math.sin(angle+sw),x4=cx+r*Math.cos(angle),y4=cy+r*Math.sin(angle),la=sw>Math.PI?1:0;
-    paths+=`<path d="M${x1},${y1} A${R},${R} 0 ${la},1 ${x2},${y2} L${x3},${y3} A${r},${r} 0 ${la},0 ${x4},${y4} Z" fill="${s.c}" opacity=".85"/>`;angle+=sw});
-  document.getElementById('ch-donut').innerHTML=`<svg width="128" height="128" viewBox="0 0 128 128">${paths}<text x="64" y="68" text-anchor="middle" fill="#ede8d8" font-size="16" font-weight="700" font-family="Merriweather,serif">${total}</text><text x="64" y="80" text-anchor="middle" fill="#4d5a70" font-size="8" letter-spacing="2">TOTAL</text></svg><div class="donut-legend">${seg.map(s=>`<div class="dl-item"><div class="dl-dot" style="background:${s.c}"></div>${s.l}<div class="dl-val">${s.v}</div></div>`).join('')}</div>`;
+  _lastDonutSeg=seg; _lastDonutTotal=total;
+  const svg=buildDonutSVG(seg,total,128,54,34);
+  const legend=seg.map(s=>`<div class="dl-item"><div class="dl-dot" style="background:${s.c}"></div>${s.l}<div class="dl-val">${s.v}</div></div>`).join('');
+  document.getElementById('ch-donut').innerHTML=`${svg}<div class="donut-legend">${legend}</div>`;
+}
+function openDonutModal(){
+  const modal=document.getElementById('donut-modal-ov');
+  if(!modal) return;
+  const seg=_lastDonutSeg, total=_lastDonutTotal;
+  if(!seg.length){ toast('No data yet — review some cards first!'); return; }
+  // Big donut: 260px
+  const svgBig=buildDonutSVG(seg,total,260,108,68);
+  const pctRows=seg.map(s=>{
+    const pct=total>0?Math.round(s.v/total*100):0;
+    return`<div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--b1)">
+      <div style="width:14px;height:14px;border-radius:50%;background:${s.c};flex-shrink:0"></div>
+      <div style="flex:1;font-size:15px;font-weight:600;color:var(--t1)">${s.l}</div>
+      <div style="font-family:var(--serif);font-size:22px;font-weight:700;color:${s.c}">${s.v}</div>
+      <div style="font-size:13px;color:var(--t3);min-width:38px;text-align:right">${pct}%</div>
+    </div>`;
+  }).join('');
+  document.getElementById('donut-modal-body').innerHTML=`
+    <div style="display:flex;justify-content:center">${svgBig}</div>
+    <div style="width:100%">${pctRows}</div>
+    <div style="font-size:12px;color:var(--t3);text-align:center">Mastered = interval ≥ 21d · reviewed ≥ 4× · ease ≥ 2.2</div>`;
+  modal.style.display='flex';
+  setTimeout(()=>modal.classList.add('on'),10);
+}
+function closeDonutModal(e){
+  const modal=document.getElementById('donut-modal-ov');
+  if(!modal) return;
+  if(e && e.target !== modal) return;
+  modal.classList.remove('on');
+  setTimeout(()=>modal.style.display='none',200);
 }
 function renderGJTop(){
   const top=unsolvedGJ().sort((a,b)=>b.attempts-a.attempts).slice(0,10);
