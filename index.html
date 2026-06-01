@@ -445,6 +445,7 @@ input,textarea,select { font-family:var(--sans) }
 .bc-v { font-size:10px; color:var(--t2); font-family:monospace }
 .b-or{background:linear-gradient(180deg,var(--or2),var(--od))} .b-gn{background:linear-gradient(180deg,var(--gn2),#14532d)} .b-rd{background:linear-gradient(180deg,var(--rd2),var(--rd))} .b-yw{background:linear-gradient(180deg,var(--yw2),var(--yw))}
 .donut-wrap { display:flex; align-items:center; gap:18px }
+#ch-donut { width:100%; }
 .donut-legend { display:flex; flex-direction:column; gap:7px }
 .dl-item { display:flex; align-items:center; gap:7px; font-size:14px; color:var(--t2) }
 .dl-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0 }
@@ -1411,9 +1412,9 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
       <div class="cc"><div class="cc-t">⚡ SRS Rating Distribution</div><div class="bar-chart" id="ch-result"></div></div>
     </div>
     <div class="pg2">
-      <div class="cc" id="donut-card" onclick="openDonutModal()" style="cursor:pointer;transition:border-color .2s" onmouseenter="this.style.borderColor='var(--or)'" onmouseleave="this.style.borderColor=''">
-        <div class="cc-t">🎯 Mastery Distribution <span style="font-size:11px;color:var(--t3);font-weight:400;margin-left:6px">· click to expand</span></div>
-        <div class="donut-wrap" id="ch-donut" style="pointer-events:none"></div>
+      <div class="cc" id="donut-card">
+        <div class="cc-t">🎯 Mastery Distribution</div>
+        <div id="ch-donut" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 0 8px"></div>
       </div>
       <div class="cc"><div class="cc-t">👁️‍🗨️ Top Genjutsu — Most Missed</div><div id="ch-gj-top"></div></div>
     </div>
@@ -2150,19 +2151,32 @@ function renderIconPicker() {
   const icp = document.getElementById('icp');
   if(!icp) return;
   const allIcons = [...SCROLL_THEME_ICONS, ...(D.customIcons || [])];
-  icp.innerHTML = allIcons.map(ico => {
+  icp.innerHTML = allIcons.map((ico, idx) => {
     const isUrl = ico.startsWith('http') || ico.startsWith('data:');
-    const content = isUrl ? `<img src="${ico}" style="width:100%;height:100%;object-fit:contain;">` : `<span style="font-size:20px;line-height:1">${ico}</span>`;
-    const key = encodeURIComponent(ico);
-    return `<div class="ico ${ico===selIco?'on':''}" onclick="pickIcon('${key}', this)" data-ico="${key}">${content}</div>`;
+    const content = isUrl
+      ? `<img src="${ico}" style="width:100%;height:100%;object-fit:contain;">`
+      : `<span style="font-size:20px;line-height:1">${ico}</span>`;
+    // Use numeric index as data attribute — avoids putting base64 in onclick
+    return `<div class="ico ${ico===selIco?'on':''}" data-ico-idx="${idx}">${content}</div>`;
   }).join('') + `
     <div class="ico upload-btn-wrap" style="background:var(--s3);border:1px dashed var(--or2);">
       <span style="font-size:20px;color:var(--or2)">+</span>
       <input type="file" accept="image/*" onchange="uploadScrollIcon(this)">
     </div>`;
+  // Attach click handlers via JS (safe for large base64 data)
+  icp.querySelectorAll('[data-ico-idx]').forEach(el => {
+    el.addEventListener('click', () => {
+      const allIcons2 = [...SCROLL_THEME_ICONS, ...(D.customIcons || [])];
+      const idx2 = parseInt(el.dataset.icoIdx);
+      selIco = allIcons2[idx2];
+      icp.querySelectorAll('.ico').forEach(o => o.classList.remove('on'));
+      el.classList.add('on');
+    });
+  });
 }
 
 function pickIcon(key, el) {
+  // Legacy fallback — kept for compatibility
   selIco = decodeURIComponent(key);
   document.querySelectorAll('#icp .ico').forEach(o => o.classList.remove('on'));
   el.classList.add('on');
@@ -2171,7 +2185,7 @@ function pickIcon(key, el) {
 function uploadScrollIcon(input) {
   const f = input.files[0];
   if(!f) return;
-  resizeAndUploadImage(f, 64, (base64) => {
+  resizeAndUploadImage(f, 128, (base64) => {
     D.customIcons = D.customIcons || [];
     D.customIcons.push(base64);
     saveD();
@@ -2302,25 +2316,35 @@ function renderIconPickerEdit(){
   const icp=document.getElementById('icp-edit');
   if(!icp) return;
   const allIcons=[...SCROLL_THEME_ICONS,...(D.customIcons||[])];
-  icp.innerHTML=allIcons.map(ico=>{
+  icp.innerHTML=allIcons.map((ico,idx)=>{
     const isUrl=ico.startsWith('http')||ico.startsWith('data:');
     const content=isUrl?`<img src="${ico}" style="width:100%;height:100%;object-fit:contain;">`:`<span style="font-size:20px;line-height:1">${ico}</span>`;
-    const key=encodeURIComponent(ico);
-    return`<div class="ico ${ico===selIcoEdit?'on':''}" onclick="pickIconEdit('${key}',this)" data-ico="${key}">${content}</div>`;
+    return`<div class="ico ${ico===selIcoEdit?'on':''}" data-ico-idx="${idx}">${content}</div>`;
   }).join('')+`
     <div class="ico upload-btn-wrap" style="background:var(--s3);border:1px dashed var(--or2);">
       <span style="font-size:20px;color:var(--or2)">+</span>
       <input type="file" accept="image/*" onchange="uploadScrollIconEdit(this)">
     </div>`;
+  // Attach click handlers via JS — avoids base64 in onclick attribute
+  icp.querySelectorAll('[data-ico-idx]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const allIcons2=[...SCROLL_THEME_ICONS,...(D.customIcons||[])];
+      const idx2=parseInt(el.dataset.icoIdx);
+      selIcoEdit=allIcons2[idx2];
+      icp.querySelectorAll('.ico').forEach(o=>o.classList.remove('on'));
+      el.classList.add('on');
+    });
+  });
 }
 function pickIconEdit(key,el){
+  // Legacy fallback
   selIcoEdit=decodeURIComponent(key);
   document.querySelectorAll('#icp-edit .ico').forEach(o=>o.classList.remove('on'));
   el.classList.add('on');
 }
 function uploadScrollIconEdit(input){
   const f=input.files[0];if(!f)return;
-  resizeAndUploadImage(f,64,(base64)=>{
+  resizeAndUploadImage(f,128,(base64)=>{
     D.customIcons=D.customIcons||[];
     D.customIcons.push(base64);
     saveD();
@@ -2915,66 +2939,97 @@ function renderResultChart(m){
     <div class="bc-col"><div class="bc-w"><div class="bar b-or" style="height:${Math.round(m.good/mx*100)}%"></div></div><div class="bc-l">Good</div><div class="bc-v">${m.good}</div></div>
     <div class="bc-col"><div class="bc-w"><div class="bar b-gn" style="height:${Math.round(m.easy/mx*100)}%"></div></div><div class="bc-l">Easy</div><div class="bc-v">${m.easy}</div></div>`;
 }
-// Build donut SVG paths — shared by small preview and large modal
-function buildDonutSVG(seg, total, size, R, r){
-  const cx=size/2, cy=size/2;
-  let angle=-Math.PI/2, paths='';
-  seg.forEach(s=>{
-    const sw=(s.v/total)*2*Math.PI;
-    if(sw<0.01)return;
-    const x1=cx+R*Math.cos(angle),y1=cy+R*Math.sin(angle);
-    const x2=cx+R*Math.cos(angle+sw),y2=cy+R*Math.sin(angle+sw);
-    const x3=cx+r*Math.cos(angle+sw),y3=cy+r*Math.sin(angle+sw);
-    const x4=cx+r*Math.cos(angle),y4=cy+r*Math.sin(angle);
-    const la=sw>Math.PI?1:0;
-    paths+=`<path d="M${x1.toFixed(2)},${y1.toFixed(2)} A${R},${R} 0 ${la},1 ${x2.toFixed(2)},${y2.toFixed(2)} L${x3.toFixed(2)},${y3.toFixed(2)} A${r},${r} 0 ${la},0 ${x4.toFixed(2)},${y4.toFixed(2)} Z" fill="${s.c}" opacity=".88" stroke="var(--bg)" stroke-width="1.5"/>`;
-    angle+=sw;
-  });
-  const fs=Math.round(size*0.13), fsSub=Math.round(size*0.065);
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${paths}<text x="${cx}" y="${cy+fs*0.35}" text-anchor="middle" fill="#ede8d8" font-size="${fs}" font-weight="700" font-family="Merriweather,serif">${total}</text><text x="${cx}" y="${cy+fs*0.35+fsSub+2}" text-anchor="middle" fill="#4d5a70" font-size="${fsSub}" letter-spacing="2">TOTAL</text></svg>`;
-}
-let _lastDonutSeg=[], _lastDonutTotal=1;
 function renderDonut(all){
   const mst=all.filter(t=>isMastered(t)).length;
   const lrn=all.filter(t=>t.due&&!isDue(t)&&!isMastered(t)).length;
   const rev=all.filter(t=>isDue(t)&&t.due).length;
   const nw=all.filter(t=>!t.due).length;
   const total=all.length||1;
-  const seg=[{v:mst,c:'#22c55e',l:'Mastered'},{v:lrn,c:'#eab308',l:'Learning'},{v:rev,c:'#f97316',l:'Review'},{v:nw,c:'#3b82f6',l:'New'}];
-  _lastDonutSeg=seg; _lastDonutTotal=total;
-  const svg=buildDonutSVG(seg,total,128,54,34);
-  const legend=seg.map(s=>`<div class="dl-item"><div class="dl-dot" style="background:${s.c}"></div>${s.l}<div class="dl-val">${s.v}</div></div>`).join('');
-  document.getElementById('ch-donut').innerHTML=`${svg}<div class="donut-legend">${legend}</div>`;
-}
-function openDonutModal(){
-  const modal=document.getElementById('donut-modal-ov');
-  if(!modal) return;
-  const seg=_lastDonutSeg, total=_lastDonutTotal;
-  if(!seg.length){ toast('No data yet — review some cards first!'); return; }
-  // Big donut: 260px
-  const svgBig=buildDonutSVG(seg,total,260,108,68);
-  const pctRows=seg.map(s=>{
-    const pct=total>0?Math.round(s.v/total*100):0;
-    return`<div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--b1)">
-      <div style="width:14px;height:14px;border-radius:50%;background:${s.c};flex-shrink:0"></div>
-      <div style="flex:1;font-size:15px;font-weight:600;color:var(--t1)">${s.l}</div>
-      <div style="font-family:var(--serif);font-size:22px;font-weight:700;color:${s.c}">${s.v}</div>
-      <div style="font-size:13px;color:var(--t3);min-width:38px;text-align:right">${pct}%</div>
+  const seg=[
+    {v:mst,c:'#22c55e',l:'Mastered',key:'mst'},
+    {v:lrn,c:'#eab308',l:'Learning',key:'lrn'},
+    {v:rev,c:'#f97316',l:'Review',  key:'rev'},
+    {v:nw, c:'#3b82f6',l:'New',     key:'nw'}
+  ];
+
+  // Build SVG paths
+  const S=200, R=88, r=54, cx=S/2, cy=S/2;
+  let angle=-Math.PI/2, paths='', hoverPaths='';
+  seg.forEach((s,i)=>{
+    const sw=(s.v/total)*2*Math.PI;
+    if(sw<0.005)return;
+    const x1=cx+R*Math.cos(angle),       y1=cy+R*Math.sin(angle);
+    const x2=cx+R*Math.cos(angle+sw),    y2=cy+R*Math.sin(angle+sw);
+    const x3=cx+r*Math.cos(angle+sw),    y3=cy+r*Math.sin(angle+sw);
+    const x4=cx+r*Math.cos(angle),       y4=cy+r*Math.sin(angle);
+    const la=sw>Math.PI?1:0;
+    const pct=Math.round(s.v/total*100);
+    const d=`M${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${la},1 ${x2.toFixed(1)},${y2.toFixed(1)} L${x3.toFixed(1)},${y3.toFixed(1)} A${r},${r} 0 ${la},0 ${x4.toFixed(1)},${y4.toFixed(1)} Z`;
+    paths+=`<path d="${d}" fill="${s.c}" opacity=".88" stroke="var(--bg)" stroke-width="2"
+      data-label="${s.l}" data-val="${s.v}" data-pct="${pct}"
+      style="cursor:pointer;transition:opacity .15s,transform .15s;transform-origin:${cx}px ${cy}px"
+      onmouseenter="donutHover(this,'${s.l}',${s.v},${pct},'${s.c}')"
+      onmouseleave="donutLeave(this)"/>`;
+    angle+=sw;
+  });
+
+  const fs=22, fsSub=10;
+  const svgStr=`<svg id="donut-svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">
+    ${paths}
+    <circle cx="${cx}" cy="${cy}" r="${r-2}" fill="var(--bg2)" opacity=".6"/>
+    <text id="donut-center-val" x="${cx}" y="${cy-4}" text-anchor="middle" fill="#ede8d8" font-size="${fs}" font-weight="700" font-family="Merriweather,serif">${total}</text>
+    <text id="donut-center-lbl" x="${cx}" y="${cy+14}" text-anchor="middle" fill="#4d5a70" font-size="${fsSub}" letter-spacing="2">TOTAL</text>
+  </svg>`;
+
+  // Legend rows
+  const legendHtml=seg.map(s=>{
+    const pct=Math.round(s.v/total*100);
+    return `<div class="dl-item" style="gap:10px;padding:5px 0">
+      <div style="width:12px;height:12px;border-radius:50%;background:${s.c};flex-shrink:0"></div>
+      <span style="flex:1;font-size:14px;color:var(--t2)">${s.l}</span>
+      <span style="font-family:var(--serif);font-size:18px;font-weight:700;color:${s.c};min-width:36px;text-align:right">${s.v}</span>
+      <span style="font-size:12px;color:var(--t3);min-width:36px;text-align:right">${pct}%</span>
     </div>`;
   }).join('');
-  document.getElementById('donut-modal-body').innerHTML=`
-    <div style="display:flex;justify-content:center">${svgBig}</div>
-    <div style="width:100%">${pctRows}</div>
-    <div style="font-size:12px;color:var(--t3);text-align:center">Mastered = interval ≥ 21d · reviewed ≥ 4× · ease ≥ 2.2</div>`;
-  modal.style.display='flex';
-  setTimeout(()=>modal.classList.add('on'),10);
+
+  const wrap=document.getElementById('ch-donut');
+  wrap.innerHTML=`
+    <div style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;width:100%">
+      <div style="position:relative;flex-shrink:0">${svgStr}
+        <div id="donut-tooltip" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;text-align:center"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;min-width:180px">${legendHtml}</div>
+    </div>`;
 }
-function closeDonutModal(e){
-  const modal=document.getElementById('donut-modal-ov');
-  if(!modal) return;
-  if(e && e.target !== modal) return;
-  modal.classList.remove('on');
-  setTimeout(()=>modal.style.display='none',200);
+
+function donutHover(el, label, val, pct, color){
+  // Scale up hovered segment
+  el.style.opacity='1';
+  el.style.transform='scale(1.04)';
+  // Update center text
+  const cv=document.getElementById('donut-center-val');
+  const cl=document.getElementById('donut-center-lbl');
+  if(cv){ cv.textContent=val; cv.setAttribute('fill',color); }
+  if(cl){ cl.textContent=label.toUpperCase(); cl.setAttribute('fill',color); }
+  // Dim others
+  el.closest('svg').querySelectorAll('path').forEach(p=>{
+    if(p!==el){ p.style.opacity='0.35'; p.style.transform='scale(1)'; }
+  });
+}
+function donutLeave(el){
+  const svg=el.closest('svg');
+  if(!svg)return;
+  svg.querySelectorAll('path').forEach(p=>{
+    p.style.opacity='0.88';p.style.transform='scale(1)';
+  });
+  // Restore total
+  const cv=document.getElementById('donut-center-val');
+  const cl=document.getElementById('donut-center-lbl');
+  if(cv){cv.setAttribute('fill','#ede8d8');}
+  if(cl){cl.setAttribute('fill','#4d5a70');cl.textContent='TOTAL';}
+  // Restore total count
+  const all=allTerms();
+  if(cv)cv.textContent=all.length||0;
 }
 function renderGJTop(){
   const top=unsolvedGJ().sort((a,b)=>b.attempts-a.attempts).slice(0,10);
