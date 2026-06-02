@@ -1310,7 +1310,11 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
         </div>
       </div>
       <div id="quiz-area" style="display:none;width:100%;max-width:680px;flex-direction:column;align-items:center">
-        <div class="qq-card"><div class="qq-lbl">⚔️ Question</div><div class="qq-t" id="qq-t">—</div></div>
+        <div style="display:flex;gap:7px;margin-bottom:12px;align-self:flex-start">
+          <button class="btn bg_ xs qdir-btn on" data-dir="term2def" onclick="setQuizDir('term2def')" style="font-size:12px">Term → Def</button>
+          <button class="btn bg_ xs qdir-btn" data-dir="def2term" onclick="setQuizDir('def2term')" style="font-size:12px">Def → Term</button>
+        </div>
+        <div class="qq-card"><div class="qq-lbl" id="qq-lbl">⚔️ What is the definition of:</div><div class="qq-t" id="qq-t">—</div></div>
         <div class="qopts" id="qq-opts"></div>
         <button class="btn bo" id="qq-next" style="display:none;margin-top:12px" onclick="nextQuiz()">Next Question →</button>
       </div>
@@ -1408,7 +1412,7 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
       </div>
     </div>
     <div class="pg4" id="perf-sum"></div>
-    <div class="sh"><h2>🌀 SRS Status Breakdown</h2></div>
+    <div class="sh"><h2>🌀 SRS Status Breakdown</h2><span style="font-size:11px;color:var(--t4);margin-left:6px;font-style:italic">all-time snapshot</span></div>
     <div class="srs-strip" id="srs-strip"></div>
     <div class="sh" style="margin-top:18px"><h2>📈 Weekly Progress</h2></div>
     <div class="cc" style="margin-bottom:14px">
@@ -1830,13 +1834,16 @@ function renderIcon(iconStr) {
   return iconStr; // Trả về Emoji cũ nếu có
 }
 
-// SM-2 Algorithm
+// SM-2 Algorithm (fixed: Hard reduces interval, fuzz factor prevents avalanche)
 function smNext(r,c){
   let{interval:iv=1,ease:ea=2.5,step:st=0}=c;
   if(r===0){iv=1;st=0;ea=Math.max(1.3,ea-.2)}
-  else if(r===1){iv=Math.max(1,Math.round(iv*1.2));ea=Math.max(1.3,ea-.15)}
+  // FIX: Hard now keeps or slightly reduces interval (not inflates it)
+  else if(r===1){iv=Math.max(1,Math.round(iv*0.85));ea=Math.max(1.3,ea-.15)}
   else if(r===2){iv=st<2?(st===0?1:3):Math.round(iv*ea);st=Math.min(st+1,2)}
   else{iv=st<2?4:Math.round(iv*ea*1.3);ea+=.1;st=2}
+  // FIX: Add fuzz factor (±5%) to graduated intervals to prevent review avalanches
+  if(st>=2&&iv>4){const fuzz=0.95+Math.random()*0.1;iv=Math.max(1,Math.round(iv*fuzz));}
   return{interval:iv,ease:+ea.toFixed(2),step:st,due:Date.now()+iv*864e5,lastRating:r,reviewCount:(c.reviewCount||0)+1}
 }
 const isDue=c=>!c.due||c.due<=Date.now();
@@ -1856,7 +1863,7 @@ function rankIdx(xp){let i=0;while(i<RANKS.length-1&&xp>=RANK_THR[i+1])i++;retur
 function todayKey(){return new Date().toISOString().slice(0,10)}
 function logToday(field,n=1){
   const k=todayKey();
-  D.log[k]=D.log[k]||{reviewed:0,again:0,hard:0,good:0,easy:0,gjFixed:0};
+  D.log[k]=D.log[k]||{reviewed:0,again:0,hard:0,good:0,easy:0,gjFixed:0,gjWrong:0};
   D.log[k][field]=(D.log[k][field]||0)+n;
   saveD();
 }
@@ -2189,7 +2196,8 @@ function renderWarnings(){
   w.innerHTML=warns.join('');
 }
 function avg7daySpeed(){
-  let total=0;for(let i=1;i<=7;i++){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);total+=(D.log[k]||{}).reviewed||0}
+  // FIX: Include today (i=0) for accurate 7-day average
+  let total=0;for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);total+=(D.log[k]||{}).reviewed||0}
   return Math.round(total/7);
 }
 
@@ -2616,13 +2624,31 @@ function rateSRS(r){
   logToday('reviewed');logToday(['again','hard','good','easy'][r]);
   updateStreak();addXP(r===0?1:r===1?2:r===2?3:5);saveD();
   flipped=false;document.getElementById('cinner').classList.remove('fl');document.getElementById('fhint').textContent='';
-  if(pos<deck.length-1){pos++;renderCard()}else showDone();
-  if(r===0){// auto-add to genjutsu if Again 3 times on same term
+
+  // FIX: Again → re-queue card near end of deck (Anki-style) instead of dropping it
+  if(r===0){
+    const requeueCard={...c,_requeueCount:(c._requeueCount||0)+1};
+    // Only requeue up to 2 times to prevent infinite loops
+    if(requeueCard._requeueCount<=2){
+      deck.splice(pos,1); // remove from current position
+      // Insert at end (or a few cards before end if deck is long)
+      const insertAt=Math.min(deck.length,deck.length);
+      deck.splice(insertAt,0,requeueCard);
+      // Don't advance pos — next card is now at same pos
+      if(deck.length===0){showDone();}else{if(pos>=deck.length)pos=deck.length-1;renderCard();}
+    } else {
+      // Exhausted requeues — advance normally
+      if(pos<deck.length-1){pos++;renderCard()}else showDone();
+    }
+    // Auto-add to genjutsu
     const gj=D.genjutsu.find(g=>g.autoTerm===c.term&&!g.solved);
     if(gj){gj.attempts=(gj.attempts||0)+1}else if(c.term){
       D.genjutsu.push({id:Date.now(),autoTerm:c.term,question:`[Auto] Term: ${c.term}`,opts:[{label:'A',text:c.def}],correctIdx:0,yoursIdx:-1,topic:'',explain:'',solved:false,attempts:1,auto:true,createdAt:Date.now()});
     }
     saveD();updateStats();
+  } else {
+    // Good/Hard/Easy → advance normally
+    if(pos<deck.length-1){pos++;renderCard()}else showDone();
   }
 }
 function showDone(){
@@ -2635,14 +2661,21 @@ function showDone(){
   updateStats();renderChakraBar();renderWeakSubjects();
 }
 function restartStudy(){deck=shuffle(deck);pos=0;flipped=false;sStats={a:0,h:0,g:0,e:0};document.getElementById('sdone').classList.remove('on');document.getElementById('cinner').classList.remove('fl');switchMode(studyMode)}
+// FIX: Quiz direction — 'term2def' (show term, pick def) or 'def2term' (show def, pick term)
+let quizDir='term2def';
+function setQuizDir(d){quizDir=d;document.querySelectorAll('.qdir-btn').forEach(b=>b.classList.toggle('on',b.dataset.dir===d));qDeck=shuffle([...deck]);qPos=0;renderQuizQ();}
+
 function renderQuizQ(){
   document.getElementById('qq-next').style.display='none';
   if(!qDeck.length||qPos>=qDeck.length){showDone();return}
   const q=qDeck[qPos];
-  document.getElementById('qq-t').textContent=q.term;
-  const all=D.scrolls[studyFI]?.terms||[];
+  // FIX: Support both directions
+  const showPrompt = quizDir==='term2def' ? q.term : q.def;
+  const promptLabel = quizDir==='term2def' ? '⚔️ What is the definition of:' : '⚔️ Which term matches this definition:';
+  document.getElementById('qq-lbl').textContent=promptLabel;
+  document.getElementById('qq-t').textContent=showPrompt;
   // Same-subject distractors first for more realistic questions
-  const curSubject=D.scrolls[studyFI]?.subject||'';
+  const curSubject=studyFI>=0?(D.scrolls[studyFI]?.subject||''):'';
   const sameSubjTerms=D.scrolls.filter(s=>s.subject===curSubject).flatMap(s=>s.terms||[]).filter(t=>t.term!==q.term);
   let others=shuffle(sameSubjTerms).slice(0,3);
   if(others.length<3){const fallback=allTerms().filter(t=>t.term!==q.term&&!others.some(d=>d.term===t.term));others=[...others,...shuffle(fallback).slice(0,3-others.length)];}
@@ -2650,14 +2683,33 @@ function renderQuizQ(){
   const pct=qDeck.length>1?Math.round(qPos/(qDeck.length-1)*100):100;
   document.getElementById('sp-pos').textContent=`${qPos+1} / ${qDeck.length}`;document.getElementById('sp-pct').textContent=pct+'%';document.getElementById('sp-bar').style.width=pct+'%';
   const c=document.getElementById('qq-opts');c.innerHTML='';
-  opts.forEach(opt=>{const d=document.createElement('div');d.className='qopt';d.textContent=opt.def;d.onclick=()=>pickQuizOpt(d,opt.term===q.term,c,q.def,q.term,opt.def);c.appendChild(d)});
+  if(quizDir==='term2def'){
+    // Show term → pick correct definition
+    opts.forEach(opt=>{const d=document.createElement('div');d.className='qopt';d.textContent=opt.def;d.onclick=()=>pickQuizOpt(d,opt.term===q.term,c,q.def,q.term,opt.term===q.term?opt.term:opt.term,q);c.appendChild(d)});
+  } else {
+    // Show def → pick correct term
+    opts.forEach(opt=>{const d=document.createElement('div');d.className='qopt';d.textContent=opt.term;d.onclick=()=>pickQuizOpt(d,opt.term===q.term,c,q.term,q.term,opt.term===q.term?opt.term:opt.term,q);c.appendChild(d)});
+  }
 }
-function pickQuizOpt(el,correct,container,correctDef,termName,chosenDef){
+function pickQuizOpt(el,correct,container,correctAns,termName,chosenAns,qCard){
   if(container.querySelector('.correct,.wrong'))return;
   container.querySelectorAll('.qopt').forEach(o=>o.classList.add('locked'));
-  if(correct){el.classList.add('correct');sStats.g++;logToday('good');addXP(3);toast('⚡ Correct!',1400)}
-  else{el.classList.add('wrong');sStats.a++;logToday('again');container.querySelectorAll('.qopt').forEach(o=>{if(o.textContent===correctDef)o.classList.add('correct')});toast('❌ Wrong!',1400)}
-  logToday('reviewed');updateStreak();saveD();
+  // FIX: Quiz results now update SRS state for the card
+  const si=qCard?._si!==undefined?qCard._si:studyFI;
+  const orig=si>=0?D.scrolls[si]?.terms[qCard?._oi]??null:null;
+  if(correct){
+    el.classList.add('correct');sStats.g++;logToday('good');logToday('reviewed');addXP(3);
+    // FIX: Update SRS — correct quiz answer = Good (2)
+    if(orig)Object.assign(orig,smNext(2,orig));
+    toast('⚡ Correct!',1400);
+  } else {
+    el.classList.add('wrong');sStats.a++;logToday('again');logToday('reviewed');
+    // FIX: Update SRS — wrong quiz answer = Again (0)
+    if(orig)Object.assign(orig,smNext(0,orig));
+    container.querySelectorAll('.qopt').forEach(o=>{if(o.textContent===correctAns)o.classList.add('correct')});
+    toast('❌ Wrong!',1400);
+  }
+  updateStreak();saveD();
   document.getElementById('qq-next').style.display='inline-flex';
 }
 function nextQuiz(){qPos++;renderQuizQ()}
@@ -2994,6 +3046,7 @@ function pickRetry(el,oi2,wqIdx,corrIdx){
       D.genjutsu[wqIdx].attempts=(D.genjutsu[wqIdx].attempts||0)+1;
       D.genjutsu[wqIdx].retryFails=(D.genjutsu[wqIdx].retryFails||0)+1;
     }
+    logToday('gjWrong');  // FIX: Log Genjutsu-specific wrong answer
     saveD();toast('❌ Wrong — keep training!',1800);
   }
   const exp=document.getElementById('rty-exp'),nxt=document.getElementById('rty-next');
@@ -3017,12 +3070,18 @@ function getLog(){
 function renderPerf(){
   const {keys,merged}=getLog();
   const all=allTerms(),gj=D.genjutsu||[];
-  const acc=merged.reviewed?Math.round((merged.good+merged.easy)/merged.reviewed*100):0;
+  // FIX: Accuracy = (Good+Easy) / (Good+Easy+Hard+Again) — clarifies denominator
+  // Also compute first-try correct rate (only Good+Easy, excluding Again which is retry)
+  const totalRatings=merged.good+merged.easy+merged.hard+merged.again;
+  const acc=totalRatings?Math.round((merged.good+merged.easy)/totalRatings*100):0;
+  // Retention = Good+Easy vs Good+Easy+Again (ignoring Hard as partial success)
+  const firstTryTotal=merged.good+merged.easy+merged.again;
+  const retention=firstTryTotal?Math.round((merged.good+merged.easy)/firstTryTotal*100):0;
   document.getElementById('perf-sum').innerHTML=`
     <div class="pcard po"><div class="pv">${merged.reviewed}</div><div class="pl">Cards Reviewed</div></div>
-    <div class="pcard pg"><div class="pv">${acc}%</div><div class="pl">Accuracy</div></div>
+    <div class="pcard pg" title="Good+Easy out of all ratings (Again/Hard/Good/Easy). Measures session quality."><div class="pv">${acc}%</div><div class="pl">Session Quality</div></div>
     <div class="pcard pr"><div class="pv">${unsolvedGJ().length}</div><div class="pl">Genjutsu Unsolved</div></div>
-    <div class="pcard pb"><div class="pv">${merged.gjFixed}</div><div class="pl">Genjutsu Broken</div></div>`;
+    <div class="pcard pb" title="Cards you recalled correctly (Good/Easy) vs forgot (Again). True retention rate."><div class="pv">${retention}%</div><div class="pl">Retention Rate</div></div>`;
   const newC=all.filter(t=>!t.due).length,lrn=all.filter(t=>t.due&&isDue(t)&&(t.interval||0)<7).length;
   const rev=all.filter(t=>t.due&&isDue(t)&&(t.interval||0)>=7).length,mst=masterTerms().length;
   document.getElementById('srs-strip').innerHTML=`
@@ -3227,7 +3286,8 @@ function practiceOneGJFromPerf(i){
 }
 function renderGJTrend(){
   const days=PP==='month'?14:7;const wr=[],fix=[],labels=[];
-  for(let i=days-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);const v=D.log[k]||{};wr.push(v.again||0);fix.push(v.gjFixed||0);labels.push(i===0?'Today':i===1?'Yest':fdate(d))}
+  // FIX: Use gjWrong (Genjutsu-specific wrong answers) not 'again' (SRS flashcard metric)
+  for(let i=days-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);const v=D.log[k]||{};wr.push(v.gjWrong||0);fix.push(v.gjFixed||0);labels.push(i===0?'Today':i===1?'Yest':fdate(d))}
   const mx=Math.max(...wr,...fix,1);
   const chartEl=document.getElementById('ch-gj-trend');
   chartEl.style.height='110px';
