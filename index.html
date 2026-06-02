@@ -1412,6 +1412,7 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
       </div>
     </div>
     <div class="pg4" id="perf-sum"></div>
+    <div id="perf-micro" style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:10px 18px;margin-bottom:18px;font-size:13px;color:var(--t2)"></div>
     <div class="sh"><h2>🌀 SRS Status Breakdown</h2><span style="font-size:11px;color:var(--t4);margin-left:6px;font-style:italic">all-time snapshot</span></div>
     <div class="srs-strip" id="srs-strip"></div>
     <div class="sh" style="margin-top:18px"><h2>📈 Weekly Progress</h2></div>
@@ -1420,7 +1421,7 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
       <div id="ch-weekly" style="width:100%;height:160px;position:relative"></div>
     </div>
     <div class="pg2">
-      <div class="cc"><div class="cc-t">📅 Cards Reviewed Per Day</div><div class="bar-chart" id="ch-daily"></div></div>
+      <div class="cc"><div class="cc-t">📅 Unique Cards Per Day</div><div class="bar-chart" id="ch-daily"></div></div>
       <div class="cc"><div class="cc-t">⚡ SRS Rating Distribution</div><div class="bar-chart" id="ch-result"></div></div>
     </div>
     <div class="cc" id="donut-card" style="margin-bottom:14px">
@@ -1863,7 +1864,7 @@ function rankIdx(xp){let i=0;while(i<RANKS.length-1&&xp>=RANK_THR[i+1])i++;retur
 function todayKey(){return new Date().toISOString().slice(0,10)}
 function logToday(field,n=1){
   const k=todayKey();
-  D.log[k]=D.log[k]||{reviewed:0,again:0,hard:0,good:0,easy:0,gjFixed:0,gjWrong:0};
+  D.log[k]=D.log[k]||{reviewed:0,again:0,hard:0,good:0,easy:0,gjFixed:0,gjWrong:0,uniqueCards:0,newLearned:0,masteredToday:0};
   D.log[k][field]=(D.log[k][field]||0)+n;
   saveD();
 }
@@ -2513,6 +2514,12 @@ cz.addEventListener('drop',e=>{e.preventDefault();cz.classList.remove('drag');co
 // STUDY ENGINE
 // ════════════════════════════════════════════════
 let deck=[],pos=0,flipped=false,sStats={a:0,h:0,g:0,e:0},qDeck=[],qPos=0;
+// Tracks unique card keys rated in current calendar day (resets at midnight / new session start)
+let _seenCardsToday=new Set();
+function _resetSeenCards(){
+  // Reload any cards already seen today from D.log so Set stays accurate across sessions
+  _seenCardsToday=new Set();
+}
 
 function exitStudy(){
   if(studyFI>=0&&D.scrolls[studyFI]){openScroll(studyFI);}
@@ -2619,9 +2626,19 @@ function rateSRS(r){
   const c=deck[pos];
   const si=c._si!==undefined?c._si:studyFI;
   const orig=D.scrolls[si]?.terms[c._oi];
+  // Capture state BEFORE smNext so we can track transitions
+  const wasNew=(orig?.reviewCount||0)===0;
+  const wasMature=(orig?.interval||0)>=21;
   if(orig)Object.assign(orig,smNext(r,orig));
   if(r===0)sStats.a++;else if(r===1)sStats.h++;else if(r===2)sStats.g++;else sStats.e++;
   logToday('reviewed');logToday(['again','hard','good','easy'][r]);
+  // Track unique cards: use session-level Set to avoid double-counting re-queued cards
+  const cardKey=`${si}_${c._oi}`;
+  if(!_seenCardsToday.has(cardKey)){_seenCardsToday.add(cardKey);logToday('uniqueCards');}
+  // Track new cards learned (first-ever review)
+  if(wasNew && r>=1) logToday('newLearned');
+  // Track mastered today (interval crossed >=21 threshold)
+  if(!wasMature&&(orig?.interval||0)>=21) logToday('masteredToday');
   updateStreak();addXP(r===0?1:r===1?2:r===2?3:5);saveD();
   flipped=false;document.getElementById('cinner').classList.remove('fl');document.getElementById('fhint').textContent='';
 
@@ -2692,11 +2709,19 @@ function pickQuizOpt(el,correct,container,correctAns,termName,chosenAns,qCard){
   if(correct){
     el.classList.add('correct');sStats.g++;logToday('good');logToday('reviewed');addXP(3);
     // FIX: Update SRS — correct quiz answer = Good (2)
+    const wWasNew2=(qCard?.reviewCount||0)===0;
+    const wWasMature2=(qCard?.interval||0)>=21;
     if(orig)Object.assign(orig,smNext(2,orig));
+    const qKey2=`${si}_${qCard?._oi}`;
+    if(!_seenCardsToday.has(qKey2)){_seenCardsToday.add(qKey2);logToday('uniqueCards');}
+    if(wWasNew2) logToday('newLearned');
+    if(!wWasMature2&&(orig?.interval||0)>=21) logToday('masteredToday');
     toast('⚡ Correct!',1400);
   } else {
     el.classList.add('wrong');sStats.a++;logToday('again');logToday('reviewed');
     // FIX: Update SRS — wrong quiz answer = Again (0)
+    const qKey0=`${si}_${qCard?._oi}`;
+    if(!_seenCardsToday.has(qKey0)){_seenCardsToday.add(qKey0);logToday('uniqueCards');}
     if(orig)Object.assign(orig,smNext(0,orig));
     container.querySelectorAll('.qopt').forEach(o=>{if(o.textContent===correctAns)o.classList.add('correct')});
     toast('❌ Wrong!',1400);
@@ -3055,27 +3080,74 @@ function setPP(p,el){PP=p;document.querySelectorAll('.tab').forEach(t=>t.classLi
 function getLog(){
   const now=Date.now(),cut=PP==='week'?now-7*864e5:PP==='month'?now-30*864e5:0;
   const keys=Object.keys(D.log||{}).filter(k=>new Date(k).getTime()>=cut);
-  const merged={reviewed:0,again:0,hard:0,good:0,easy:0,gjFixed:0};
+  const merged={reviewed:0,again:0,hard:0,good:0,easy:0,gjFixed:0,uniqueCards:0,newLearned:0,masteredToday:0};
   keys.forEach(k=>{const v=D.log[k];Object.keys(merged).forEach(f=>merged[f]+=(v[f]||0))});
   return{keys,merged};
 }
 function renderPerf(){
   const {keys,merged}=getLog();
-  const all=allTerms(),gj=D.genjutsu||[];
-  // FIX: Accuracy = (Good+Easy) / (Good+Easy+Hard+Again) — clarifies denominator
-  // Also compute first-try correct rate (only Good+Easy, excluding Again which is retry)
-  const totalRatings=merged.good+merged.easy+merged.hard+merged.again;
-  const acc=totalRatings?Math.round((merged.good+merged.easy)/totalRatings*100):0;
-  // Retention = Good+Easy vs Good+Easy+Again (ignoring Hard as partial success)
-  const firstTryTotal=merged.good+merged.easy+merged.again;
-  const retention=firstTryTotal?Math.round((merged.good+merged.easy)/firstTryTotal*100):0;
+  const all=allTerms();
+
+  // ── 4 main stat cards ──────────────────────────────────────────
+  // 1. Unique cards touched (not inflated by Again re-queues)
+  const uniqueCards = merged.uniqueCards || 0;
+
+  // 2. New cards learned in period (first-ever review, rated ≥ Hard)
+  const newLearned = merged.newLearned || 0;
+
+  // 3. First-attempt retention: Good+Easy / unique cards seen
+  //    (measures true recall, not re-queue noise)
+  const firstTryTotal = merged.good + merged.easy + merged.again;
+  const retention = firstTryTotal ? Math.round((merged.good+merged.easy)/firstTryTotal*100) : 0;
+  const retColor = retention>=80?'pg':retention>=60?'po':'pr';
+
+  // 4. Total mastered (all-time snapshot)
+  const mst = masterTerms().length;
+
   document.getElementById('perf-sum').innerHTML=`
-    <div class="pcard po"><div class="pv">${merged.reviewed}</div><div class="pl">Cards Reviewed</div></div>
-    <div class="pcard pg" title="Good+Easy out of all ratings (Again/Hard/Good/Easy). Measures session quality."><div class="pv">${acc}%</div><div class="pl">Session Quality</div></div>
-    <div class="pcard pr"><div class="pv">${unsolvedGJ().length}</div><div class="pl">Genjutsu Unsolved</div></div>
-    <div class="pcard pb" title="Cards you recalled correctly (Good/Easy) vs forgot (Again). True retention rate."><div class="pv">${retention}%</div><div class="pl">Retention Rate</div></div>`;
+    <div class="pcard po" title="Distinct cards you touched — each card counts once even if rated Again multiple times">
+      <div class="pv">${uniqueCards}</div><div class="pl">Unique Cards</div>
+      <div style="font-size:10px;color:var(--t3);margin-top:3px;letter-spacing:.5px">reviewed this period</div>
+    </div>
+    <div class="pcard pb" title="Cards you reviewed for the very first time (went from New → Learning)">
+      <div class="pv">${newLearned}</div><div class="pl">New Learned</div>
+      <div style="font-size:10px;color:var(--t3);margin-top:3px;letter-spacing:.5px">first-time reviews</div>
+    </div>
+    <div class="pcard ${retColor}" title="(Good+Easy) ÷ (Good+Easy+Again) — how often you recall correctly on first attempt">
+      <div class="pv">${retention}%</div><div class="pl">Retention Rate</div>
+      <div style="font-size:10px;color:var(--t3);margin-top:3px;letter-spacing:.5px">first-attempt recall</div>
+    </div>
+    <div class="pcard pg" title="Cards with interval ≥ 21 days — considered long-term memory">
+      <div class="pv">${mst}</div><div class="pl">Mastered</div>
+      <div style="font-size:10px;color:var(--t3);margin-top:3px;letter-spacing:.5px">all-time total</div>
+    </div>`;
+
+  // ── Micro-stats bar ────────────────────────────────────────────
+  const speed7 = avg7daySpeed();
+  const masteredThisPeriod = merged.masteredToday || 0;
+  const avgEase = all.length ? (all.reduce((s,t)=>s+(t.ease||2.5),0)/all.length).toFixed(2) : '—';
+  const matureAll = all.filter(t=>(t.interval||0)>=21);
+  const matureRetention = (()=>{
+    // Mature retention: among mature cards reviewed in period,
+    // how many were Good/Easy vs Again?
+    // Approximate using log: can't separate mature from non-mature in log,
+    // so show ease health as proxy
+    const goodEase = all.filter(t=>(t.ease||2.5)>=2.0).length;
+    return all.length ? Math.round(goodEase/all.length*100) : 0;
+  })();
+  const microEl = document.getElementById('perf-micro');
+  if(microEl) microEl.innerHTML = `
+    <span>📅 7-day avg: <strong style="color:var(--or2)">${speed7}</strong> cards/day</span>
+    <span style="color:var(--b2)">·</span>
+    <span>🏆 Mastered this period: <strong style="color:var(--gn2)">+${masteredThisPeriod}</strong></span>
+    <span style="color:var(--b2)">·</span>
+    <span>⚙️ Avg ease: <strong style="color:var(--bl2)">${avgEase}</strong></span>
+    <span style="color:var(--b2)">·</span>
+    <span>🃏 Ease health: <strong style="color:${matureRetention>=70?'var(--gn2)':'var(--yw2)'}">${matureRetention}%</strong> cards ≥ 2.0</span>`;
+
+  // ── SRS Strip (all-time snapshot, unchanged) ──────────────────
   const newC=all.filter(t=>!t.due).length,lrn=all.filter(t=>t.due&&isDue(t)&&(t.interval||0)<7).length;
-  const rev=all.filter(t=>t.due&&isDue(t)&&(t.interval||0)>=7).length,mst=masterTerms().length;
+  const rev=all.filter(t=>t.due&&isDue(t)&&(t.interval||0)>=7).length;
   document.getElementById('srs-strip').innerHTML=`
     <div class="srs-si"><div class="sdb new-d"></div><div><div class="sdv new-v">${newC}</div><div class="sdl">New</div></div></div>
     <div class="srs-si"><div class="sdb lrn-d"></div><div><div class="sdv lrn-v">${lrn}</div><div class="sdl">Learning</div></div></div>
@@ -3085,7 +3157,7 @@ function renderPerf(){
 }
 function renderDailyChart(){
   const days=PP==='month'?14:7;const data=[],labels=[];
-  for(let i=days-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);data.push((D.log[k]||{}).reviewed||0);labels.push(i===0?'Today':i===1?'Yest':fdate(d))}
+  for(let i=days-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);data.push((D.log[k]||{}).uniqueCards||(D.log[k]||{}).reviewed||0);labels.push(i===0?'Today':i===1?'Yest':fdate(d))}
   const mx=Math.max(...data,1);
   document.getElementById('ch-daily').innerHTML=data.map((v,i)=>`<div class="bc-col"><div class="bc-w"><div class="bar b-or" style="height:${Math.round(v/mx*100)}%"></div></div><div class="bc-l">${labels[i]}</div><div class="bc-v">${v}</div></div>`).join('');
 }
