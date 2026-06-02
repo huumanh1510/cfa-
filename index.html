@@ -2625,27 +2625,19 @@ function rateSRS(r){
   updateStreak();addXP(r===0?1:r===1?2:r===2?3:5);saveD();
   flipped=false;document.getElementById('cinner').classList.remove('fl');document.getElementById('fhint').textContent='';
 
-  // FIX: Again → re-queue card near end of deck (Anki-style) instead of dropping it
+  // Again → re-queue card near end of deck (Anki-style) instead of dropping it
   if(r===0){
     const requeueCard={...c,_requeueCount:(c._requeueCount||0)+1};
     // Only requeue up to 2 times to prevent infinite loops
     if(requeueCard._requeueCount<=2){
       deck.splice(pos,1); // remove from current position
-      // Insert at end (or a few cards before end if deck is long)
-      const insertAt=Math.min(deck.length,deck.length);
-      deck.splice(insertAt,0,requeueCard);
+      deck.splice(deck.length,0,requeueCard);
       // Don't advance pos — next card is now at same pos
       if(deck.length===0){showDone();}else{if(pos>=deck.length)pos=deck.length-1;renderCard();}
     } else {
       // Exhausted requeues — advance normally
       if(pos<deck.length-1){pos++;renderCard()}else showDone();
     }
-    // Auto-add to genjutsu
-    const gj=D.genjutsu.find(g=>g.autoTerm===c.term&&!g.solved);
-    if(gj){gj.attempts=(gj.attempts||0)+1}else if(c.term){
-      D.genjutsu.push({id:Date.now(),autoTerm:c.term,question:`[Auto] Term: ${c.term}`,opts:[{label:'A',text:c.def}],correctIdx:0,yoursIdx:-1,topic:'',explain:'',solved:false,attempts:1,auto:true,createdAt:Date.now()});
-    }
-    saveD();updateStats();
   } else {
     // Good/Hard/Easy → advance normally
     if(pos<deck.length-1){pos++;renderCard()}else showDone();
