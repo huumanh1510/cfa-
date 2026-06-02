@@ -1017,6 +1017,9 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
 /* ── CUSTOM CONFIRM MODAL ── */
 #confirm-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.82); backdrop-filter:blur(8px); z-index:9000; align-items:center; justify-content:center; }
 #confirm-modal.on { display:flex; }
+#gj-edit-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); backdrop-filter:blur(10px); z-index:9500; align-items:center; justify-content:center; }
+#gj-edit-modal.on { display:flex; }
+.gj-edit-box { background:var(--s1); border:1px solid var(--b1); border-radius:var(--rl); padding:26px 28px; width:640px; max-width:95vw; max-height:90vh; overflow-y:auto; box-shadow:0 24px 80px rgba(0,0,0,.7); animation:mIn .22s var(--ease); }
 .confirm-box { background:var(--s1); border:1px solid var(--b1); border-radius:var(--rl); padding:26px 28px; width:360px; box-shadow:0 24px 80px rgba(0,0,0,.65); animation:mIn .2s ease; }
 .confirm-msg { font-size:15px; color:var(--t1); line-height:1.5; margin-bottom:20px; }
 .confirm-ft { display:flex; gap:9px; justify-content:flex-end; }
@@ -1572,6 +1575,40 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
     <div class="confirm-ft">
       <button class="btn bg_ sm" onclick="_confirmCancel()">Cancel</button>
       <button class="btn br_ sm" id="confirm-ok-btn" onclick="_confirmOk()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="gj-edit-modal" onclick="if(event.target===this)closeGJEdit()">
+  <div class="gj-edit-box">
+    <div class="modal-hd">✏️ Edit Wrong Answer</div>
+    <div class="fgrp"><label class="flbl">Question</label>
+      <textarea class="ft" id="ej-q" style="min-height:90px;line-height:1.55;white-space:pre-wrap"></textarea></div>
+    <div class="fgrp">
+      <label class="flbl">Answer Options — click letter to mark CORRECT answer</label>
+      <div id="ej-choices">
+        <div class="choice-row"><div class="choice-lbl" data-eci="0" onclick="setECorrect(0)">A</div><input type="text" class="fi" id="ej-opt-0" placeholder="Option A..."></div>
+        <div class="choice-row"><div class="choice-lbl" data-eci="1" onclick="setECorrect(1)">B</div><input type="text" class="fi" id="ej-opt-1" placeholder="Option B..."></div>
+        <div class="choice-row"><div class="choice-lbl" data-eci="2" onclick="setECorrect(2)">C</div><input type="text" class="fi" id="ej-opt-2" placeholder="Option C..."></div>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fgrp" style="flex:1">
+        <label class="flbl">Your Answer (wrong one)</label>
+        <div style="display:flex;gap:7px" id="ej-ya-btns">
+          <button class="btn bg_ sm" data-eya="0" onclick="setEYours(0,this)">A</button>
+          <button class="btn bg_ sm" data-eya="1" onclick="setEYours(1,this)">B</button>
+          <button class="btn bg_ sm" data-eya="2" onclick="setEYours(2,this)">C</button>
+        </div>
+      </div>
+      <div class="fgrp" style="flex:1"><label class="flbl">Link to Reading (Scroll)</label>
+        <select class="fs" id="ej-topic"><option value="">— Select a Reading —</option></select></div>
+    </div>
+    <div class="fgrp"><label class="flbl">Explanation</label>
+      <textarea class="ft" id="ej-explain" style="min-height:80px;line-height:1.55;white-space:pre-wrap"></textarea></div>
+    <div class="modal-ft">
+      <button class="btn bg_ sm" onclick="closeGJEdit()">Cancel</button>
+      <button class="btn bo sm" onclick="saveGJEdit()">💾 Save Changes</button>
     </div>
   </div>
 </div>
@@ -2771,6 +2808,7 @@ function renderGJList(){
                   <div class="wq-actions">
                     <button class="btn bo xs" onclick="retryOne(${oi})">🔁 Retry</button>
                     ${!wq.solved?`<button class="btn bgn xs" onclick="markGJSolved(${oi})">✓ Mark Broken</button>`:''}
+                    <button class="btn bg_ xs" onclick="openGJEdit(${oi})">✏️ Edit</button>
                     <button class="btn br_ xs" onclick="delGJ(${oi})">🗑</button>
                   </div>
                 </div>
@@ -2824,6 +2862,98 @@ function markGJSolved(i){
   },'Mark Broken',false);
 }
 function delGJ(i){showConfirm('Delete this question?',()=>{D.genjutsu.splice(i,1);saveD();renderGJList();updateStats();toast('🗑 Deleted')});}
+
+// ── EDIT GENJUTSU ──
+let _gjEditIdx = -1;
+let _ejCorrect = -1;
+let _ejYours   = -1;
+
+function openGJEdit(i){
+  const wq = D.genjutsu[i];
+  if(!wq){ toast('⚠️ Not found'); return; }
+  _gjEditIdx = i;
+  _ejCorrect = wq.correctIdx;
+  _ejYours   = wq.yoursIdx;
+
+  document.getElementById('ej-q').value       = wq.question || '';
+  document.getElementById('ej-explain').value = wq.explain  || '';
+
+  // Fill options
+  const LBLS = ['A','B','C'];
+  for(let k=0;k<3;k++){
+    const inp = document.getElementById('ej-opt-'+k);
+    if(inp) inp.value = (wq.opts[k] && wq.opts[k].text) || '';
+  }
+
+  // Correct highlight
+  document.querySelectorAll('#ej-choices .choice-lbl').forEach((l,j)=>{
+    l.classList.toggle('sel', j === wq.correctIdx);
+  });
+  // Yours highlight
+  document.querySelectorAll('#ej-ya-btns .btn').forEach((b,j)=>{
+    b.classList.toggle('bo', j === wq.yoursIdx);
+  });
+
+  // Populate topic select
+  const sel = document.getElementById('ej-topic');
+  if(sel){
+    populateGJTopicSelFor('ej-topic');
+    sel.value = wq.topic || '';
+  }
+
+  document.getElementById('gj-edit-modal').classList.add('on');
+}
+function closeGJEdit(){
+  document.getElementById('gj-edit-modal').classList.remove('on');
+  _gjEditIdx = -1;
+}
+function setECorrect(i){
+  _ejCorrect = i;
+  document.querySelectorAll('#ej-choices .choice-lbl').forEach((l,j)=>l.classList.toggle('sel', j===i));
+}
+function setEYours(i,el){
+  _ejYours = i;
+  document.querySelectorAll('#ej-ya-btns .btn').forEach(b=>b.classList.remove('bo'));
+  el.classList.add('bo');
+}
+function populateGJTopicSelFor(selId){
+  const sel = document.getElementById(selId);
+  if(!sel) return;
+  const grouped = getGroupedScrolls();
+  let opts = '<option value="">— Select a Reading —</option>';
+  for(const [subKey, scrolls] of Object.entries(grouped)){
+    const subName = SUBJECT_NAMES[subKey] || subKey;
+    opts += `<optgroup label="${subName}">`;
+    scrolls.forEach(s => {
+      const iconText = (s.icon && !s.icon.startsWith('data:') && !s.icon.startsWith('http')) ? s.icon + ' ' : '';
+      opts += `<option value="${s.name}">${iconText}${s.name}</option>`;
+    });
+    opts += '</optgroup>';
+  }
+  if(D.scrolls.length === 0) opts = '<option value="">— Create a Scroll first —</option>';
+  sel.innerHTML = opts;
+}
+function saveGJEdit(){
+  if(_gjEditIdx < 0){ closeGJEdit(); return; }
+  const q = document.getElementById('ej-q').value.trim();
+  if(!q){ toast('⚠️ Question cannot be empty!'); return; }
+  const inputs = [0,1,2].map(k=>{ const el=document.getElementById('ej-opt-'+k); return el?el.value.trim():''; });
+  if(inputs.filter(Boolean).length < 2){ toast('⚠️ Need at least 2 options!'); return; }
+  if(_ejCorrect < 0){ toast('⚠️ Mark the correct answer!'); return; }
+  const LBLS = ['A','B','C'];
+  const wq = D.genjutsu[_gjEditIdx];
+  wq.question   = q;
+  wq.opts       = inputs.map((v,i)=>({label:LBLS[i],text:v})).filter(o=>o.text);
+  wq.correctIdx = _ejCorrect;
+  wq.yoursIdx   = _ejYours;
+  wq.explain    = document.getElementById('ej-explain').value.trim();
+  const topicVal = document.getElementById('ej-topic').value.trim();
+  wq.topic = topicVal;
+  const linkedScroll = D.scrolls.find(s => s.name === topicVal);
+  wq.subject     = linkedScroll ? (linkedScroll.subject || '') : (wq.subject || '');
+  wq.subjectName = linkedScroll ? (SUBJECT_NAMES[wq.subject] || wq.subject) : (wq.subjectName || '');
+  saveD(); closeGJEdit(); renderGJList(); toast('✅ Saved!');
+}
 
 // Retry mode
 let retryList=[],retryPos=0;
@@ -3068,7 +3198,7 @@ function renderGJTop(){
     return`<div style="margin-bottom:8px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:9px 12px;cursor:pointer;transition:border-color .15s" onclick="practiceOneGJFromPerf(${gjIdx})" onmouseenter="this.style.borderColor='var(--pu2)'" onmouseleave="this.style.borderColor='var(--b2)'">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
         <span style="font-size:11px;font-weight:700;color:var(--rd2);font-family:monospace;flex-shrink:0;margin-right:8px">#${idx+1} · ${w.attempts}×</span>
-        <span style="font-size:14px;font-weight:700;color:var(--t1);line-height:1.4;flex:1">${w.question.substring(0,90)}${w.question.length>90?'…':''}</span>
+        <span style="font-size:21px;font-weight:700;color:var(--t1);line-height:1.4;flex:1;white-space:normal">${w.question.substring(0,160)}${w.question.length>160?'…':''}</span>
         <span style="font-size:11px;color:var(--pu2);margin-left:8px;flex-shrink:0">▶ Practice</span>
       </div>
       <div style="height:4px;background:var(--s3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.round(w.attempts/mx*100)}%;background:linear-gradient(90deg,#7f1d1d,var(--rd2));border-radius:3px;transition:width .5s"></div></div>
