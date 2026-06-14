@@ -1024,6 +1024,103 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
 .confirm-msg { font-size:15px; color:var(--t1); line-height:1.5; margin-bottom:20px; }
 .confirm-ft { display:flex; gap:9px; justify-content:flex-end; }
 
+/* ══════════════════════════════════════
+   GAMIFICATION UPGRADE PACK
+══════════════════════════════════════ */
+
+/* ── 1. RANK-UP CEREMONY MODAL ── */
+#ceremony-ov { display:none; position:fixed; inset:0; background:rgba(0,0,0,.88); backdrop-filter:blur(10px); z-index:9800; align-items:center; justify-content:center; }
+#ceremony-ov.on { display:flex; }
+.ceremony-box { position:relative; width:480px; max-width:92vw; padding:40px 32px; text-align:center; border-radius:var(--rl);
+  background:linear-gradient(160deg, var(--s1) 0%, var(--s2) 100%); border:1px solid var(--b2);
+  box-shadow:0 30px 100px rgba(0,0,0,.7), 0 0 60px rgba(249,115,22,.25);
+  animation:ceremonyIn .5s cubic-bezier(.2,.9,.3,1.2); overflow:hidden;
+}
+@keyframes ceremonyIn { 0%{opacity:0;transform:scale(.8) translateY(30px)} 60%{opacity:1;transform:scale(1.04)} 100%{transform:scale(1)} }
+.ceremony-burst { position:absolute; inset:0; pointer-events:none; }
+.ceremony-burst::before, .ceremony-burst::after {
+  content:''; position:absolute; left:50%; top:42%; width:340px; height:340px; margin:-170px 0 0 -170px;
+  border-radius:50%; background:radial-gradient(circle, rgba(249,115,22,.35), transparent 70%);
+  animation:ceremonyPulse 1.8s ease-out infinite;
+}
+.ceremony-burst::after { animation-delay:.5s; }
+@keyframes ceremonyPulse { 0%{transform:scale(.4);opacity:.9} 100%{transform:scale(1.6);opacity:0} }
+.ceremony-seal { font-size:64px; line-height:1; margin-bottom:6px; position:relative; z-index:1; animation:ceremonySpin 1.2s cubic-bezier(.2,.8,.3,1); filter:drop-shadow(0 0 18px rgba(249,115,22,.6)); }
+@keyframes ceremonySpin { from{transform:rotate(-180deg) scale(.4);opacity:0} to{transform:rotate(0) scale(1);opacity:1} }
+.ceremony-eyebrow { position:relative; z-index:1; font-size:12px; font-weight:800; letter-spacing:4px; text-transform:uppercase; color:var(--or2); margin-bottom:6px; }
+.ceremony-title { position:relative; z-index:1; font-family:var(--serif); font-size:28px; font-weight:900; color:var(--t1); margin-bottom:8px; }
+.ceremony-title .ac { color:var(--or); }
+.ceremony-sub { position:relative; z-index:1; font-size:14px; color:var(--t2); line-height:1.6; margin-bottom:22px; }
+.ceremony-quote { position:relative; z-index:1; font-family:var(--serif); font-style:italic; font-size:14px; color:var(--t2); border-left:3px solid var(--or); padding:8px 14px; text-align:left; background:rgba(249,115,22,.06); border-radius:0 8px 8px 0; margin-bottom:22px; }
+.ceremony-quote span { display:block; margin-top:6px; font-size:11px; font-style:normal; color:var(--t3); letter-spacing:1px; text-transform:uppercase; }
+.ceremony-btn { position:relative; z-index:1; }
+
+/* ── 2. ACHIEVEMENT BADGES ── */
+.badge-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:10px; }
+.badge-item { background:var(--s2); border:1px solid var(--b1); border-radius:var(--r); padding:12px 8px; text-align:center; transition:all .2s var(--ease); position:relative; }
+.badge-item.locked { opacity:.35; filter:grayscale(1); }
+.badge-item.unlocked { border-color:rgba(249,115,22,.35); box-shadow:0 0 0 1px rgba(249,115,22,.08) inset; }
+.badge-item.unlocked:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(249,115,22,.18); }
+.badge-ic { font-size:28px; line-height:1; margin-bottom:6px; }
+.badge-nm { font-size:11px; font-weight:700; color:var(--t1); margin-bottom:2px; }
+.badge-desc { font-size:10px; color:var(--t3); line-height:1.3; }
+.badge-toast { display:flex; align-items:center; gap:10px; }
+.badge-toast .bt-ic { font-size:26px; }
+.dash-badges-strip { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+.dash-badge-chip { display:inline-flex; align-items:center; gap:6px; background:var(--s1); border:1px solid var(--b1); border-radius:20px; padding:5px 12px 5px 8px; font-size:12px; font-weight:700; color:var(--t2); }
+.dash-badge-chip .dbc-ic { font-size:16px; }
+
+/* ── 3. JUTSU UNLOCK (scroll mastery cosmetic) ── */
+.dc.jutsu-unlocked { border-color:rgba(250,204,21,.4); box-shadow:0 0 0 1px rgba(250,204,21,.12) inset, 0 4px 22px rgba(250,204,21,.12); }
+.dc.jutsu-unlocked::before {
+  content:'⚡ Jutsu Mastered'; position:absolute; top:8px; right:-30px; background:linear-gradient(135deg,#ca8a04,#fbbf24);
+  color:#1a1200; font-size:9px; font-weight:800; letter-spacing:1px; text-transform:uppercase;
+  padding:3px 34px; transform:rotate(35deg); box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+.dc.jutsu-unlocked .dc-ic { box-shadow:0 0 0 2px #fbbf24, 0 0 14px rgba(251,191,36,.5); }
+@keyframes jutsuShimmer { 0%,100%{box-shadow:0 0 0 1px rgba(250,204,21,.12) inset, 0 4px 22px rgba(250,204,21,.12)} 50%{box-shadow:0 0 0 1px rgba(250,204,21,.25) inset, 0 4px 32px rgba(250,204,21,.28)} }
+.dc.jutsu-unlocked { animation:jutsuShimmer 3.4s ease-in-out infinite; }
+
+/* ── 4. SENSEI QUOTE (shares ceremony modal styles, sensei-flavored) ── */
+.sensei-avatar { font-size:46px; line-height:1; margin-bottom:8px; }
+
+/* ── 5. BOSS BATTLE ── */
+.boss-banner { background:linear-gradient(135deg, rgba(124,58,237,.12), rgba(220,38,38,.1)); border:1px solid rgba(168,85,247,.25); border-radius:var(--rl); padding:16px 20px; margin-bottom:18px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.boss-ic { font-size:38px; line-height:1; filter:drop-shadow(0 0 10px rgba(168,85,247,.5)); flex-shrink:0; }
+.boss-info { flex:1; min-width:180px; }
+.boss-title { font-family:var(--serif); font-size:16px; font-weight:800; color:var(--t1); margin-bottom:3px; }
+.boss-sub { font-size:13px; color:var(--t2); }
+.boss-hp-track { height:10px; background:var(--s3); border-radius:6px; overflow:hidden; margin-top:8px; max-width:320px; }
+.boss-hp-fill { height:100%; border-radius:6px; background:linear-gradient(90deg,#dc2626,#f97316,#a855f7); transition:width .5s var(--ease); }
+.boss-vs { font-family:var(--serif); font-weight:900; font-size:13px; color:var(--pu2); letter-spacing:2px; }
+#boss-ov { display:none; position:fixed; inset:0; background:rgba(0,0,0,.88); backdrop-filter:blur(10px); z-index:9700; align-items:center; justify-content:center; }
+#boss-ov.on { display:flex; }
+.boss-result-box { width:460px; max-width:92vw; padding:36px 32px; text-align:center; border-radius:var(--rl); background:linear-gradient(160deg, var(--s1) 0%, var(--s2) 100%); border:1px solid var(--b2); box-shadow:0 30px 100px rgba(0,0,0,.7); animation:ceremonyIn .5s cubic-bezier(.2,.9,.3,1.2); }
+.boss-result-ic { font-size:60px; margin-bottom:8px; }
+.boss-result-title { font-family:var(--serif); font-size:24px; font-weight:900; color:var(--t1); margin-bottom:8px; }
+.boss-result-sub { font-size:14px; color:var(--t2); margin-bottom:22px; line-height:1.6; }
+
+/* ── 6. GENJUTSU SEAL-BREAK ANIMATION ── */
+.seal-break-fx { position:fixed; z-index:9999; pointer-events:none; font-size:42px; font-family:var(--serif); font-weight:900; color:var(--pu2); text-shadow:0 0 18px rgba(168,85,247,.7); animation:sealBreak 1s cubic-bezier(.2,.8,.3,1) forwards; }
+@keyframes sealBreak {
+  0%   { transform:scale(.5) rotate(0deg); opacity:1; filter:blur(0); }
+  60%  { transform:scale(1.6) rotate(25deg); opacity:.8; filter:blur(1px); }
+  100% { transform:scale(2.4) rotate(70deg); opacity:0; filter:blur(4px); }
+}
+
+/* ── 7. AVATAR EVOLUTION BY RANK ── */
+.sb-av, .sb-logo-ic { position:relative; }
+.rank-ring { box-shadow:0 0 0 2px var(--ring-color,transparent), 0 0 14px var(--ring-glow,transparent); }
+.rank-ring.rk-academy { --ring-color:#4d5a70; --ring-glow:transparent; }
+.rank-ring.rk-genin { --ring-color:#22c55e; --ring-glow:rgba(34,197,94,.35); }
+.rank-ring.rk-chunin { --ring-color:#3b82f6; --ring-glow:rgba(59,130,246,.4); }
+.rank-ring.rk-jonin { --ring-color:#a855f7; --ring-glow:rgba(168,85,247,.45); }
+.rank-ring.rk-kage { --ring-color:#fbbf24; --ring-glow:rgba(251,191,36,.6); animation:kageRingPulse 2.4s ease-in-out infinite; }
+@keyframes kageRingPulse {
+  0%,100% { box-shadow:0 0 0 2px var(--ring-color), 0 0 14px var(--ring-glow); }
+  50%     { box-shadow:0 0 0 3px var(--ring-color), 0 0 24px var(--ring-glow); }
+}
+
 </style>
 
 <!-- Firebase SDK (compat v9) -->
@@ -1116,6 +1213,21 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
     </div>
 
     <div id="dash-warnings"></div>
+
+    <div class="dash-badges-strip" id="dash-badges-strip"></div>
+
+    <div class="boss-banner" id="boss-banner" style="display:none">
+      <div class="boss-ic" id="boss-ic">👁️</div>
+      <div class="boss-info">
+        <div class="boss-title" id="boss-title">Boss Battle — Weak Subject</div>
+        <div class="boss-sub" id="boss-sub">Defeat this boss to clear its Genjutsu!</div>
+        <div class="boss-hp-track"><div class="boss-hp-fill" id="boss-hp-fill" style="width:100%"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+        <div class="boss-vs">VS</div>
+        <button class="btn bpu" onclick="launchBossBattle()">⚔️ Challenge</button>
+      </div>
+    </div>
 
     <div class="chakra-wrap">
       <div class="chakra-header">
@@ -1498,6 +1610,9 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
         <select class="fs" id="prof-level"><option value="1">Level I</option><option value="2">Level II</option><option value="3">Level III</option></select>
       </div>
     </div>
+    <div class="divl"></div>
+    <div style="font-family:var(--serif);font-size:13px;font-weight:700;color:var(--t2);margin-bottom:12px">🏆 Achievements <span id="prof-badge-count" style="color:var(--t3);font-weight:400;font-size:11px"></span></div>
+    <div class="badge-grid" id="badge-grid"></div>
     <div class="modal-ft">
       <button class="btn bg_ sm" onclick="closeProfile()">Close</button>
       <button class="btn bo sm" onclick="saveProfile()">💾 Save Profile</button>
@@ -1580,6 +1695,31 @@ body.focus-mode .emb { opacity:0!important; animation:none!important; }
     <div class="confirm-ft">
       <button class="btn bg_ sm" onclick="_confirmCancel()">Cancel</button>
       <button class="btn br_ sm" id="confirm-ok-btn" onclick="_confirmOk()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RANK-UP / SENSEI CEREMONY MODAL (shared) ══ -->
+<div id="ceremony-ov" onclick="if(event.target===this)closeCeremony()">
+  <div class="ceremony-box">
+    <div class="ceremony-burst"></div>
+    <div class="ceremony-seal" id="cer-seal">🍥</div>
+    <div class="ceremony-eyebrow" id="cer-eyebrow">RANK PROMOTION</div>
+    <div class="ceremony-title" id="cer-title">Welcome, <span class="ac">Genin</span>!</div>
+    <div class="ceremony-sub" id="cer-sub">You've grown stronger, ninja.</div>
+    <div class="ceremony-quote" id="cer-quote" style="display:none"></div>
+    <button class="btn bo ceremony-btn" onclick="closeCeremony()">Continue Training →</button>
+  </div>
+</div>
+
+<!-- ══ BOSS BATTLE RESULT MODAL ══ -->
+<div id="boss-ov" onclick="if(event.target===this)closeBossResult()">
+  <div class="boss-result-box">
+    <div class="boss-result-ic" id="boss-result-ic">🏆</div>
+    <div class="boss-result-title" id="boss-result-title">Boss Defeated!</div>
+    <div class="boss-result-sub" id="boss-result-sub">You've cleared the weak-subject boss battle.</div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="btn bo" onclick="closeBossResult()">🍥 Nice!</button>
     </div>
   </div>
 </div>
@@ -1667,6 +1807,7 @@ function setSyncState(s){
 function ensureD(){
   D.scrolls =D.scrolls ||[];D.genjutsu=D.genjutsu||[];D.log=D.log||{};
   D.xp=D.xp||0;D.streak=D.streak||{current:0,longest:0,lastStudyDate:''};
+  D.achievements=D.achievements||[];
   D.profile=D.profile||{};
   D.profile.name      =D.profile.name      ||'Ninja';
   D.profile.dailyGoal =D.profile.dailyGoal ||20;
@@ -1709,7 +1850,7 @@ function signOut(){
 function initApp(){
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app').style.display='grid';
-  initBG();updateSidebar();renderDash();renderHeatmap();
+  initBG();updateSidebar();renderDash();renderHeatmap();checkAchievements(true);
   if(localStorage.getItem('focus_mode')==='1'){
     document.body.classList.add('focus-mode');
     const fb=document.getElementById('focus-btn');
@@ -1814,6 +1955,50 @@ const RANKS=['Academy Student','Genin','Chunin','Jonin','Kage'];
 const RANK_THR=[0,100,300,700,1500,3000];
 const SUBJECT_RANK={ethics:'S',fra:'S',equity:'S',fixed:'S',pm:'A',corp:'A',quant:'B',econ:'B',deriv:'C',alt:'C'};
 
+// ── GAMIFICATION UPGRADE PACK: constants ──
+
+// Rank metadata: seal icon, CSS ring class, and ceremony copy per rank
+const RANK_META=[
+  {ring:'rk-academy', seal:'🎓', title:'Academy Student', desc:'Every legend starts in the classroom. Keep training!'},
+  {ring:'rk-genin',   seal:'🍥', title:'Genin',           desc:"You've passed the Academy. Your ninja journey begins now."},
+  {ring:'rk-chunin',  seal:'⚡', title:'Chunin',          desc:'Promoted to Chunin! Your tactics and knowledge are sharpening.'},
+  {ring:'rk-jonin',   seal:'🌀', title:'Jonin',           desc:'Jonin rank achieved — an elite ninja, ready for tougher missions.'},
+  {ring:'rk-kage',    seal:'🔥', title:'Kage',            desc:'You have reached Kage — master of the CFA village. Outstanding!'},
+];
+
+// Sensei quotes shown on milestone popups (streaks, mastery %, daily goal)
+const SENSEI_QUOTES=[
+  {who:'Kakashi Hatake', text:'Those who break the rules are scum, but those who abandon their friends — or their study plan — are worse than scum.'},
+  {who:'Iruka Umino',    text:'A ninja must see through deception — but first, master the basics. Keep reviewing!'},
+  {who:'Might Guy',      text:'The flames of youth burn brightest with consistency, not intensity. One scroll at a time!'},
+  {who:'Jiraiya',        text:'A real ninja endures hardship for the sake of his goal. Today\'s repetition is tomorrow\'s mastery.'},
+  {who:'Tsunade',        text:'Believe in yourself, but trust your spaced repetition more.'},
+  {who:'Shikamaru Nara', text:'Sometimes the smartest move is just showing up every day. Troublesome, but it works.'},
+  {who:'Asuma Sarutobi', text:'Protect what matters — your streak, your scrolls, and your exam date.'},
+  {who:'Kakashi Hatake', text:"In the ninja world, those who don't review become Hokage... never. Keep going."},
+];
+
+// Achievement badge definitions. id must be unique & stable (stored in D.achievements)
+const BADGES=[
+  {id:'first_blood',   ic:'🩸', name:'First Blood',        desc:'Broke your first Genjutsu'},
+  {id:'first_master',  ic:'🌟', name:'First Mastery',       desc:'Mastered your first card'},
+  {id:'streak_3',      ic:'🔥', name:'Warming Up',          desc:'3-day study streak'},
+  {id:'streak_7',      ic:'👁️', name:'Sharingan Eye',       desc:'7-day study streak'},
+  {id:'streak_30',     ic:'🐉', name:'Eternal Mangekyo',    desc:'30-day study streak'},
+  {id:'genjutsu_10',   ic:'🌀', name:'Genjutsu Breaker',    desc:'Broke 10 Genjutsu'},
+  {id:'genjutsu_50',   ic:'⚔️', name:'Master of Illusions', desc:'Broke 50 Genjutsu'},
+  {id:'mastered_50',   ic:'🥷', name:'Shadow Clone Master', desc:'Mastered 50 cards'},
+  {id:'mastered_200',  ic:'💎', name:'Living Legend',       desc:'Mastered 200 cards'},
+  {id:'scroll_master', ic:'📜', name:'Scroll Master',       desc:'100% mastered one whole scroll'},
+  {id:'rank_genin',    ic:'🍥', name:'Genin',               desc:'Reached Genin rank'},
+  {id:'rank_chunin',   ic:'⚡', name:'Chunin',              desc:'Reached Chunin rank'},
+  {id:'rank_jonin',    ic:'🌪️', name:'Jonin',               desc:'Reached Jonin rank'},
+  {id:'rank_kage',     ic:'🔥', name:'Kage',                desc:'Reached Kage rank'},
+  {id:'sage_mode',     ic:'🧘', name:'Sage Mode',           desc:'≥90% retention over 7 days'},
+  {id:'boss_slayer',   ic:'🏆', name:'Boss Slayer',         desc:'Defeated a Boss Battle'},
+];
+
+
 // ════════════════════════════════════════════════
 // DATA LAYER & UPLOAD COMPATIBILITY
 // ════════════════════════════════════════════════
@@ -1821,7 +2006,7 @@ const SUBJECT_RANK={ethics:'S',fra:'S',equity:'S',fixed:'S',pm:'A',corp:'A',quan
 function defD(){return{
   profile:{name:'Ninja',avatarId:'kurama',dailyGoal:20,maxSession:20,examDate:'',cfaLevel:1},
   scrolls:[], genjutsu:[], log:{}, xp:0, streak:{current:0,longest:0,lastStudyDate:''},
-  customIcons: [], customAvatars: [] // Lưu trữ ảnh up lên
+  customIcons: [], customAvatars: [], achievements: [] // Lưu trữ ảnh up lên + badges đạt được
 }}
 
 let D=loadD(); // initial value from localStorage; overwritten by Firestore after auth
@@ -1856,8 +2041,15 @@ const unsolvedGJ=()=>(D.genjutsu||[]).filter(q=>!q.solved);
 
 function addXP(n){
   const old=rankIdx(D.xp);D.xp=(D.xp||0)+n;
-  if(rankIdx(D.xp)>old) toast(`🎉 Rank Up! ${RANKS[rankIdx(D.xp)]}`,4000);
-  saveD();updateSidebar();
+  const ni=rankIdx(D.xp);
+  if(ni>old){
+    showCeremony(ni);
+    if(ni===1) unlockBadge('rank_genin');
+    if(ni===2) unlockBadge('rank_chunin');
+    if(ni===3) unlockBadge('rank_jonin');
+    if(ni===4) unlockBadge('rank_kage');
+  }
+  saveD();updateSidebar();checkAchievements();
 }
 function rankIdx(xp){let i=0;while(i<RANKS.length-1&&xp>=RANK_THR[i+1])i++;return i}
 
@@ -1879,6 +2071,211 @@ function updateStreak(){
   s.longest=Math.max(s.longest||0,s.current);
   s.lastStudyDate=today;
   saveD();
+  checkAchievements();
+  maybeShowSenseiQuote();
+}
+
+// ════════════════════════════════════════════════
+// GAMIFICATION UPGRADE PACK
+// ════════════════════════════════════════════════
+
+// ── 1. RANK-UP CEREMONY ──
+function showCeremony(rankIndex){
+  const meta=RANK_META[rankIndex]||RANK_META[0];
+  document.getElementById('cer-seal').textContent=meta.seal;
+  document.getElementById('cer-eyebrow').textContent='RANK PROMOTION';
+  document.getElementById('cer-title').innerHTML=`Welcome, <span class="ac">${meta.title}</span>!`;
+  document.getElementById('cer-sub').textContent=meta.desc;
+  document.getElementById('cer-quote').style.display='none';
+  document.getElementById('ceremony-ov').classList.add('on');
+}
+function closeCeremony(){document.getElementById('ceremony-ov').classList.remove('on')}
+
+// ── 4. SENSEI QUOTE POPUP (shares ceremony modal, sensei-flavored) ──
+function showSenseiQuote(reasonText){
+  const q=SENSEI_QUOTES[Math.floor(Math.random()*SENSEI_QUOTES.length)];
+  document.getElementById('cer-seal').textContent='🥷';
+  document.getElementById('cer-eyebrow').textContent='SENSEI WISDOM';
+  document.getElementById('cer-title').innerHTML=`<span class="ac">Well done!</span>`;
+  document.getElementById('cer-sub').textContent=reasonText||'';
+  const qEl=document.getElementById('cer-quote');
+  qEl.style.display='block';
+  qEl.innerHTML=`"${q.text}"<span>— ${q.who}</span>`;
+  document.getElementById('ceremony-ov').classList.add('on');
+}
+// Triggers sensei quote on streak milestones (3/7/14/30/60/100 days)
+let _lastSenseiStreakShown=null;
+function maybeShowSenseiQuote(){
+  const cur=D.streak?.current||0;
+  const milestones=[3,7,14,30,60,100];
+  if(milestones.includes(cur) && _lastSenseiStreakShown!==cur){
+    _lastSenseiStreakShown=cur;
+    setTimeout(()=>showSenseiQuote(`🔥 ${cur}-day streak! Your dedication is paying off.`),600);
+  }
+}
+
+// ── 2. ACHIEVEMENT BADGES ──
+function unlockBadge(id,silent){
+  D.achievements=D.achievements||[];
+  if(D.achievements.includes(id))return;
+  D.achievements.push(id);
+  saveD();
+  const b=BADGES.find(x=>x.id===id);
+  if(b&&!silent) toast(`<div class="badge-toast"><span class="bt-ic">${b.ic}</span><div><strong>Badge Unlocked!</strong><br>${b.name} — ${b.desc}</div></div>`,4200);
+  renderBadgeGrid();renderDashBadgeStrip();
+}
+function checkAchievements(silent){
+  const mst=masterTerms().length;
+  const gjFixedTotal=(D.genjutsu||[]).filter(q=>q.solved).length;
+  const streak=D.streak?.current||0;
+
+  if(gjFixedTotal>=1) unlockBadge('first_blood',silent);
+  if(gjFixedTotal>=10) unlockBadge('genjutsu_10',silent);
+  if(gjFixedTotal>=50) unlockBadge('genjutsu_50',silent);
+
+  if(mst>=1) unlockBadge('first_master',silent);
+  if(mst>=50) unlockBadge('mastered_50',silent);
+  if(mst>=200) unlockBadge('mastered_200',silent);
+
+  if(streak>=3) unlockBadge('streak_3',silent);
+  if(streak>=7) unlockBadge('streak_7',silent);
+  if(streak>=30) unlockBadge('streak_30',silent);
+
+  // Scroll Master: any scroll with >=5 terms, all mastered
+  if((D.scrolls||[]).some(s=>(s.terms||[]).length>=5 && (s.terms||[]).every(isMastered))){
+    unlockBadge('scroll_master',silent);
+  }
+
+  // Sage Mode: retention >= 90% over last 7 days
+  let good=0,total=0;
+  for(let i=0;i<7;i++){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const k=d.toISOString().slice(0,10);
+    const v=D.log[k]||{};
+    good+=(v.good||0)+(v.easy||0);
+    total+=(v.good||0)+(v.easy||0)+(v.again||0);
+  }
+  if(total>=10 && Math.round(good/total*100)>=90) unlockBadge('sage_mode',silent);
+
+  // Rank badges — retroactive based on current XP
+  const ri=rankIdx(D.xp||0);
+  if(ri>=1) unlockBadge('rank_genin',silent);
+  if(ri>=2) unlockBadge('rank_chunin',silent);
+  if(ri>=3) unlockBadge('rank_jonin',silent);
+  if(ri>=4) unlockBadge('rank_kage',silent);
+}
+function renderBadgeGrid(){
+  const grid=document.getElementById('badge-grid');
+  if(!grid)return;
+  const unlocked=D.achievements||[];
+  const cnt=document.getElementById('prof-badge-count');
+  if(cnt) cnt.textContent=`${unlocked.length} / ${BADGES.length}`;
+  grid.innerHTML=BADGES.map(b=>{
+    const on=unlocked.includes(b.id);
+    return `<div class="badge-item ${on?'unlocked':'locked'}" title="${b.desc}">
+      <div class="badge-ic">${b.ic}</div>
+      <div class="badge-nm">${b.name}</div>
+      <div class="badge-desc">${on?b.desc:'Locked'}</div>
+    </div>`;
+  }).join('');
+}
+function renderDashBadgeStrip(){
+  const strip=document.getElementById('dash-badges-strip');
+  if(!strip)return;
+  const unlocked=(D.achievements||[]).map(id=>BADGES.find(b=>b.id===id)).filter(Boolean);
+  if(!unlocked.length){strip.innerHTML='';return;}
+  // Show most recently unlocked (last 6) — earned order
+  const recent=unlocked.slice(-6);
+  strip.innerHTML=recent.map(b=>`<div class="dash-badge-chip" title="${b.desc}"><span class="dbc-ic">${b.ic}</span>${b.name}</div>`).join('')
+    + `<div class="dash-badge-chip" style="cursor:pointer;color:var(--or2)" onclick="openProfile()">🏆 ${unlocked.length}/${BADGES.length} badges</div>`;
+}
+
+// ── 3. JUTSU UNLOCK — check if a scroll is 100% mastered ──
+function isScrollJutsuUnlocked(s){
+  const ts=s.terms||[];
+  return ts.length>=1 && ts.every(isMastered);
+}
+
+// ── 5. BOSS BATTLE ──
+let bossBattle=null; // {subjectKey, subjectName, pool:[genjutsu items], idx, fails}
+function getBossSubject(){
+  const weak=getWeakSubjects();
+  return weak.length?weak[0]:null;
+}
+function renderBossBanner(){
+  const banner=document.getElementById('boss-banner');
+  if(!banner)return;
+  const boss=getBossSubject();
+  if(!boss || boss.unsolved<3){banner.style.display='none';return;}
+  banner.style.display='flex';
+  document.getElementById('boss-title').textContent=`Boss Battle — ${boss.name}`;
+  document.getElementById('boss-sub').textContent=`${boss.unsolved} unsolved Genjutsu guard this subject. Defeat the boss to break them all!`;
+  document.getElementById('boss-hp-fill').style.width='100%';
+}
+function launchBossBattle(){
+  const boss=getBossSubject();
+  if(!boss){toast('⚠️ No weak subject found yet — keep logging Genjutsu!');return}
+  const pool=(D.genjutsu||[]).filter(q=>!q.solved && (q.subjectName||q.subject||'Other')===boss.name);
+  if(!pool.length){toast('✅ Nothing to fight here — all Genjutsu broken!');return}
+  bossBattle={subjectName:boss.name, pool:shuffle(pool), idx:0, fails:0, total:pool.length};
+  retryList=bossBattle.pool;
+  retryPos=0;
+  document.getElementById('gj-list-view').style.display='none';
+  document.getElementById('gj-retry-view').style.display='block';
+  nav('genjutsuPg',document.querySelector('.nv[onclick*="genjutsuPg"]'));
+  renderRetryCard();
+  updateBossHP();
+  toast(`⚔️ Boss Battle started — ${boss.name} (${pool.length} questions)`,3000);
+}
+function updateBossHP(){
+  if(!bossBattle)return;
+  const fill=document.getElementById('boss-hp-fill');
+  if(!fill)return;
+  const remaining=bossBattle.pool.filter(q=>!q.solved).length;
+  const pct=Math.max(0,Math.round(remaining/bossBattle.total*100));
+  fill.style.width=pct+'%';
+}
+function checkBossBattleComplete(){
+  if(!bossBattle)return;
+  const remaining=bossBattle.pool.filter(q=>!q.solved).length;
+  updateBossHP();
+  if(remaining===0){
+    unlockBadge('boss_slayer');
+    const subjectName=bossBattle.subjectName;
+    bossBattle=null;
+    document.getElementById('boss-result-ic').textContent='🏆';
+    document.getElementById('boss-result-title').textContent='Boss Defeated!';
+    document.getElementById('boss-result-sub').textContent=`You've broken every Genjutsu guarding ${subjectName}. The village is safer thanks to you, ninja!`;
+    document.getElementById('boss-ov').classList.add('on');
+    addXP(15);
+  }
+}
+function closeBossResult(){
+  document.getElementById('boss-ov').classList.remove('on');
+  renderDash();renderGJList();
+}
+
+// ── 6. GENJUTSU SEAL-BREAK ANIMATION ──
+function sealBreakFx(x,y){
+  const seals=['封','解','術','破'];
+  const el=document.createElement('div');
+  el.className='seal-break-fx';
+  el.textContent=seals[Math.floor(Math.random()*seals.length)];
+  el.style.left=(x-21)+'px';
+  el.style.top=(y-21)+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1000);
+}
+
+// ── 7. AVATAR EVOLUTION BY RANK ──
+function applyRankRing(elIds,rankIndex){
+  const meta=RANK_META[rankIndex]||RANK_META[0];
+  elIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.classList.remove('rank-ring','rk-academy','rk-genin','rk-chunin','rk-jonin','rk-kage');
+    el.classList.add('rank-ring',meta.ring);
+  });
 }
 
 // ════════════════════════════════════════════════
@@ -1993,6 +2390,8 @@ function updateSidebar(){
     const el=document.getElementById(id);
     if(el){el.style.background=avBg;el.style.padding='0';el.style.display='flex';el.style.alignItems='center';el.style.justifyContent='center';el.innerHTML=avHtml;}
   });
+  applyRankRing(['sb-av','sb-logo-ic'],ri);
+  renderBadgeGrid();renderDashBadgeStrip();
 
   // Render Sidebar Scrolls
   const c=document.getElementById('sb-scrolls');
@@ -2122,7 +2521,7 @@ function renderWeakSubjects(){
   list.innerHTML=weak.map((s,i)=>`<div class="sc" style="border-top:3px solid ${col(s.score)};padding:14px 16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:1px;text-transform:uppercase">#${i+1} ${s.score>=70?'Critical':'Needs Work'}</span><span style="font-size:20px;font-weight:800;font-family:var(--serif);color:${col(s.score)}">${s.score}%</span></div><div style="font-family:var(--serif);font-size:13px;font-weight:700;color:var(--t1);margin-bottom:4px">${s.name}</div><div style="font-size:12px;color:var(--t3)">${s.unsolved} unsolved / ${s.total} Genjutsu</div><div style="height:3px;background:var(--s3);border-radius:2px;margin-top:8px"><div style="height:100%;border-radius:2px;background:${col(s.score)};width:${s.score}%;transition:width .6s"></div></div></div>`).join('');
 }
 function renderDash(){
-  updateStats();renderChakraBar();renderHeatmap();renderWarnings();renderWeakSubjects();
+  updateStats();renderChakraBar();renderHeatmap();renderWarnings();renderWeakSubjects();renderBossBanner();renderDashBadgeStrip();
   const c=document.getElementById('dash-fg');
   const grouped = getGroupedScrolls();
   
@@ -2140,7 +2539,8 @@ function renderDash(){
       const ts=s.terms||[],due=ts.filter(isDue).length,mst=ts.filter(isMastered).length;
       const pct=ts.length?Math.round(mst/ts.length*100):0;
       const rb=`<span class="rank-badge rb-${s.rank?.toLowerCase()||'b'}">${s.rank||'B'}-Rank</span>`;
-      return`<div class="dc" onclick="openScroll(${s._idx})">
+      const jutsuOn=isScrollJutsuUnlocked(s);
+      return`<div class="dc ${jutsuOn?'jutsu-unlocked':''}" onclick="openScroll(${s._idx})">
         <div class="dc-top">
           <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">
             <div class="dc-ic">${renderIcon(s.icon)}</div>
@@ -2928,6 +3328,8 @@ function markGJSolved(i){
   showConfirm('Mark as broken (solved)?',()=>{
     D.genjutsu[i].solved=true;D.genjutsu[i].solvedAt=Date.now();
     logToday('gjFixed');saveD();renderGJList();updateStats();addXP(5);toast('✅ Genjutsu broken! +5 XP');
+    checkAchievements();
+    if(bossBattle) checkBossBattleComplete();
   },'Mark Broken',false);
 }
 function delGJ(i){showConfirm('Delete this question?',()=>{D.genjutsu.splice(i,1);saveD();renderGJList();updateStats();toast('🗑 Deleted')});}
@@ -3028,10 +3430,17 @@ function saveGJEdit(){
 let retryList=[],retryPos=0;
 function startRetry(){retryList=shuffle(unsolvedGJ());if(!retryList.length){toast('🎉 No unsolved Genjutsu!');return}retryPos=0;document.getElementById('gj-list-view').style.display='none';document.getElementById('gj-retry-view').style.display='block';renderRetryCard()}
 function retryOne(i){retryList=[D.genjutsu[i]];retryPos=0;document.getElementById('gj-list-view').style.display='none';document.getElementById('gj-retry-view').style.display='block';renderRetryCard()}
-function exitRetry(){document.getElementById('gj-retry-view').style.display='none';document.getElementById('gj-list-view').style.display='block';renderGJList();updateStats()}
+function exitRetry(){bossBattle=null;document.getElementById('gj-retry-view').style.display='none';document.getElementById('gj-list-view').style.display='block';renderGJList();updateStats();renderDash()}
 function renderRetryCard(){
   if(retryPos>=retryList.length){
-    document.getElementById('rty-card').innerHTML=`<div class="sdone on" style="width:100%;max-width:680px"><div class="done-ico">🍥</div><div class="done-ttl">Session Done!</div><div class="done-sub" style="-webkit-text-fill-color:var(--t2)">Reviewed ${retryList.length} question${retryList.length>1?'s':''}</div><div style="display:flex;gap:8px;margin-top:4px"><button class="btn bo" onclick="retryList=shuffle(retryList);retryPos=0;renderRetryCard()">🔁 Again</button><button class="btn bg_" onclick="exitRetry()">← Back</button></div></div>`;
+    let extra='';
+    if(bossBattle){
+      const remaining=bossBattle.pool.filter(q=>!q.solved).length;
+      extra = remaining>0
+        ? `<div class="boss-sub" style="margin-top:6px;color:var(--pu2)">⚔️ Boss still has ${remaining} Genjutsu standing. Hit "Again" to finish it off!</div>`
+        : '';
+    }
+    document.getElementById('rty-card').innerHTML=`<div class="sdone on" style="width:100%;max-width:680px"><div class="done-ico">🍥</div><div class="done-ttl">Session Done!</div><div class="done-sub" style="-webkit-text-fill-color:var(--t2)">Reviewed ${retryList.length} question${retryList.length>1?'s':''}</div>${extra}<div style="display:flex;gap:8px;margin-top:4px"><button class="btn bo" onclick="retryList=shuffle(${bossBattle?'bossBattle.pool.filter(q=>!q.solved)':'retryList'});retryPos=0;renderRetryCard()">🔁 Again</button><button class="btn bg_" onclick="exitRetry()">← Back</button></div></div>`;
     return;
   }
   const wq=retryList[retryPos];
@@ -3054,6 +3463,9 @@ function pickRetry(el,oi2,wqIdx,corrIdx){
     el.classList.add('correct');
     if(D.genjutsu[wqIdx]){D.genjutsu[wqIdx].solved=true;D.genjutsu[wqIdx].solvedAt=Date.now();logToday('gjFixed')}
     saveD();addXP(5);toast('⚡ Correct! Genjutsu broken! +5 XP',1600);
+    const r=el.getBoundingClientRect();sealBreakFx(r.left+r.width/2,r.top+r.height/2);
+    checkAchievements();
+    if(bossBattle) checkBossBattleComplete();
   } else {
     el.classList.add('wrong');
     setTimeout(()=>el.classList.add('shake'),10);
@@ -3436,6 +3848,7 @@ function openProfile(){
   document.getElementById('prof-level').value=pr.cfaLevel||1;
   selAv=pr.avatarId||'naruto';
   renderAvatarPicker();
+  renderBadgeGrid();
   document.getElementById('prof-ov').classList.add('on');
 }
 function pickAv(id,el){
@@ -3469,7 +3882,7 @@ function closeProfOv(e){if(e.target===document.getElementById('prof-ov'))closePr
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=~~(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 function fdate(d){return`${d.getDate()}/${d.getMonth()+1}`}
 let _tt;
-function toast(msg,dur=2600){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('on');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('on'),dur)}
+function toast(msg,dur=2600){const el=document.getElementById('toast');if(typeof msg==='string'&&msg.startsWith('<div class="badge-toast"')){el.innerHTML=msg;}else{el.textContent=msg;}el.classList.add('on');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('on'),dur)}
 
 // Keyboard
 document.addEventListener('keydown',e=>{
